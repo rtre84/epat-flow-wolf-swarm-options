@@ -59,23 +59,28 @@ def _extract_candidates(scout_text: str) -> list[str]:
     return tickers[:MAX_CANDIDATES]
 
 
-def _extract_specs(chair_text: str) -> list[dict]:
-    specs, bad = [], 0
+def _extract_specs(chair_text: str) -> tuple[list[dict], str]:
+    specs, bad, empty_day = [], 0, False
     for m in re.finditer(r"```json\s*(\{.*?\})\s*```", chair_text, re.S):
         blob = m.group(1)
         try:
-            specs.append(json.loads(blob))
+            obj = json.loads(blob)
         except json.JSONDecodeError:
             bad += 1
-    if not specs:  # fallback: bare JSON objects
+            continue
+        if isinstance(obj, dict) and "trade_id" not in obj and "specs" in obj:
+            empty_day = True  # chair's empty-day object; never a spec
+        else:
+            specs.append(obj)
+    if not specs and not empty_day:  # fallback: bare JSON objects
         for m in re.finditer(r"\{[^{}]*\"trade_id\"[^{}]*\}", chair_text, re.S):
             try:
                 specs.append(json.loads(m.group(0)))
             except json.JSONDecodeError:
                 bad += 1
     if bad:
-        (RAW_DIR.parent / f"parse_warnings.log").touch(exist_ok=True)
-    return specs
+        (RAW_DIR.parent / "parse_warnings.log").touch(exist_ok=True)
+    return specs, empty_day
 
 
 def run_scan(day: date | None = None) -> dict:
@@ -147,12 +152,14 @@ def run_scan(day: date | None = None) -> dict:
     chair_text = str(chair_task.output.raw if chair_task.output else "")
     (RAW_DIR / f"{day.isoformat()}_chair.txt").write_text(chair_text)
 
-    specs = _extract_specs(chair_text)
+    specs, empty_day = _extract_specs(chair_text)
+    if not specs and not empty_day:
+        RAW_DIR.parent.mkdir(parents=True, exist_ok=True)
+        (RAW_DIR / f"{day.isoformat()}_parse_warning.txt").write_text(
+            f"Chair output yielded 0 parseable specs and no empty-day object.\n---\n{chair_text}")
     SPEC_FILE.parent.mkdir(parents=True, exist_ok=True)
     SPEC_FILE.write_text(json.dumps(specs, indent=2))
-    summary = next(
-        (s.strip() for s in [re.findall(r'"summary"\s*:\s*"([^"]+)"', chair_text) and re.findall(r'"summary"\s*:\s*"([^"]+)"', chair_text)[-1]]),
-        chair_text[:300],
-    )
+    matches = re.findall(r'"summary"\s*:\s*"([^"]+)"', chair_text)
+    summary = matches[-1] if matches else chair_text[:300]
     return {"date": day.isoformat(), "candidates": candidates, "n_specs": len(specs),
-            "specs": specs, "summary": summary}
+            "specs": specs, "empty_day": empty_day and not specs, "summary": summary}
