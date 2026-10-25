@@ -61,6 +61,6 @@ def llm_smoke(prompt: str = "Reply with exactly: FLOWWOLF-SMOKE-OK") -> str:
         api_key=cfg.api_key,
         base_url=cfg.base_url or None,
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=32,
+        max_tokens=256,
     )
     return resp.choices[0].message.content or ""

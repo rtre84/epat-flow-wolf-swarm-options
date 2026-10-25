@@ -9,7 +9,7 @@ from datetime import date
 import json
 import sys
 
-from swarm.llm import LLMConfig, smoke_test as llm_smoke
+from swarm.llm import LLMConfig, llm_smoke
 from swarm.models import Strategy, TradeSpec, SpecStatus
 from swarm.tools.uw import UWMCPClient
 
