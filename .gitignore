@@ -1,0 +1,22 @@
+# Secrets
+.env
+*.key
+secrets/
+
+# Environments
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.ruff_cache/
+
+# Data artifacts (regeneratable)
+data/specs/processed/
+reports/*.md
+reports/raw/
+
+# OS
+.DS_Store
