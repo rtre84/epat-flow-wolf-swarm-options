@@ -99,59 +99,144 @@ def _direction(strategy: str) -> str:
     }[strategy]
 
 
+def bs_legs(
+    spot: float,
+    short_k: float | None,
+    long_k: float | None,
+    t_left: float,
+    iv: float,
+    is_call: bool,
+) -> tuple[float, float]:
+    """Mark of (short leg, long leg) positions; absent legs price 0.0."""
+    leg_short = 0.0 if short_k is None else bs_price(spot, short_k, t_left, iv, is_call)
+    leg_long = 0.0 if long_k is None else bs_price(spot, long_k, t_left, iv, is_call)
+    return leg_short, leg_long
+
+
+def metrics_for_direction(
+    spot: float,
+    short_k: float | None,
+    long_k: float | None,
+    t0: float,
+    iv: float,
+    is_call: bool,
+    direction: str,
+    min_net: float = 1.0,
+) -> tuple[float, float]:
+    """(net, risk) in premium points for the given archetype direction."""
+    if short_k is None and long_k is None:
+        raise ValueError("no legs")
+    leg_short, leg_long = bs_legs(spot, short_k, long_k, t0, iv, is_call)
+    if direction.endswith("credit"):
+        net = leg_short - leg_long
+    else:
+        net = leg_long - leg_short
+    if net <= min_net:
+        raise ValueError(f"degenerate structure net={net:.4f} <= floor {min_net:.4f}")
+    if direction.endswith("credit"):
+        if short_k is None or long_k is None:
+            raise ValueError("credit structure missing a leg")
+        risk = abs(short_k - long_k) - net
+    else:
+        risk = net
+    if risk <= 0:
+        raise ValueError(f"nonpositive risk={risk:.4f}")
+    return net, risk
+
+
+def position_outcome(
+    series: CloseSeries,
+    entry_i: int,
+    direction: str,
+    short_k: float | None,
+    long_k: float | None,
+    iv: float,
+    net: float,
+    risk: float,
+    dte: int,
+) -> dict:
+    """Walk one position bar-by-bar from entry_i; identical close logic for
+    the backtest and the live paper book.
+
+    Returns:
+      stopped:  {"kind": "stopped", "exit_i", "exit_date", "exit_spot", "pnl"}
+      expiry:   {"kind": "expiry", ...}
+      unresolved: {"kind": "open", "mark_i", "mark_date", "mark_spot",
+                   "value"}  — value is position worth at last bar (∓ sign-of-net
+                   convention: what closing now costs for credit, gains for debit)
+      pnl is per contract premium, positive = profit, negative = loss.
+    """
+    is_call = direction not in ("put_credit", "put_debit")
+    n = len(series.dates)
+    expiry_i = min(entry_i + dte, n - 1)
+    credit = direction.endswith("credit")
+    mark_i = entry_i
+    while mark_i < expiry_i and mark_i < n - 1:
+        mark_i += 1
+        cur_spot = series.closes[mark_i]
+        t_left = max(0.0, (dte - (mark_i - entry_i)) / DAYS_PER_YEAR)
+        short_m, long_m = bs_legs(cur_spot, short_k, long_k, t_left, iv, is_call)
+        if credit:
+            value = short_m - long_m  # cost to close
+            if value >= net + risk:
+                return {
+                    "kind": "stopped", "exit_i": mark_i,
+                    "exit_date": series.dates[mark_i].isoformat(),
+                    "exit_spot": cur_spot, "pnl": net - (net + risk),
+                }
+        else:
+            value = long_m - short_m  # position worth
+            if value <= 0.02 * net:
+                return {
+                    "kind": "stopped", "exit_i": mark_i,
+                    "exit_date": series.dates[mark_i].isoformat(),
+                    "exit_spot": cur_spot, "pnl": value - net,
+                }
+    if mark_i >= expiry_i and (mark_i - entry_i) >= dte:
+        cur_spot = series.closes[mark_i]
+        short_m, long_m = bs_legs(cur_spot, short_k, long_k, 0.0, iv, is_call)
+        if credit:
+            pnl = net - (short_m - long_m)
+        else:
+            pnl = (long_m - short_m) - net
+        return {
+            "kind": "expiry", "exit_i": mark_i,
+            "exit_date": series.dates[mark_i].isoformat(),
+            "exit_spot": cur_spot, "pnl": pnl,
+        }
+    cur_spot = series.closes[mark_i]
+    t_left = max(0.0, (dte - (mark_i - entry_i)) / DAYS_PER_YEAR)
+    short_m, long_m = bs_legs(cur_spot, short_k, long_k, t_left, iv, is_call)
+    value = (short_m - long_m) if credit else (long_m - short_m)
+    return {
+        "kind": "open", "mark_i": mark_i,
+        "mark_date": series.dates[mark_i].isoformat(),
+        "mark_spot": cur_spot, "value": value,
+    }
+
+
 def simulate_archetype(series: CloseSeries, strategy: str, dte: int) -> list[float]:
     """Enter archetype every ENTRY_STEP_DAYS; returns list of R-multiples (pnl/risk)."""
     direction = _direction(strategy)
+    is_call = direction not in ("put_credit", "put_debit")
     results: list[float] = []
-    n = len(series.dates)
-    for i in range(20, n - 1, ENTRY_STEP_DAYS):
+    for i in range(20, len(series.dates) - 1, ENTRY_STEP_DAYS):
         spot = series.closes[i]
-        entry_date = series.dates[i]
         iv0 = series.realized_vol_20(i) * IV_BLOAT
         short_k, long_k = _pick_strikes(spot, direction, dte)
         t0 = dte / DAYS_PER_YEAR
-        call_short = direction not in ("put_credit", "put_debit")
-        leg_short = 0.0 if short_k is None else bs_price(spot, short_k, t0, iv0, call_short)
-        leg_long = 0.0 if long_k is None else bs_price(spot, long_k, t0, iv0, call_short)
-        if "credit" in direction:
-            net = leg_short - leg_long  # credit received
-        else:
-            net = leg_long - leg_short  # debit paid
-        if net <= max(1.0, 0.002 * spot):  # degenerate spread
+        try:
+            net, risk = metrics_for_direction(spot, short_k, long_k, t0, iv0, is_call, direction)
+        except ValueError:
             continue
-        risk = (abs(short_k - long_k) - net) if "credit" in direction else net
-        if risk <= 0:
-            continue
-
-        stopped = False
-        expiry_i = min(i + dte, n - 1)
-        test_i = i
-        while test_i < expiry_i:
-            test_i += 1
-            cur_spot = series.closes[test_i]
-            t_left = max(0.0, (dte - (test_i - i)) / DAYS_PER_YEAR)
-            short_m = 0.0 if short_k is None else bs_price(cur_spot, short_k, t_left, iv0, call_short)
-            long_m = 0.0 if long_k is None else bs_price(cur_spot, long_k, t_left, iv0, call_short)
-            if "credit" in direction:
-                value = short_m - long_m  # cost to close: sold leg minus bought leg
-                if value >= net + risk:
-                    stopped = True
-                    break
-            else:
-                value = long_m - short_m  # position worth; we want it big
-                if value <= 0.02 * net:
-                    stopped = True
-                    break
-        if stopped:
-            pnl = (-risk) if "credit" in direction else (-risk)
+        out = position_outcome(series, i, direction, short_k, long_k, iv0, net, risk, dte)
+        if out["kind"] == "open":
+            # backtest keeps the entry even if series ends mid-hold;
+            # treat current value as realized estimate (pnl on exit assumption)
+            cur = out["value"]
+            pnl = (net - cur) if direction.endswith("credit") else (cur - net)
         else:
-            cur_spot = series.closes[expiry_i]
-            short_m = 0.0 if short_k is None else bs_price(cur_spot, short_k, 0.0, iv0, call_short)
-            long_m = 0.0 if long_k is None else bs_price(cur_spot, long_k, 0.0, iv0, call_short)
-            if "credit" in direction:
-                pnl = net - (short_m - long_m)          # credit minus closing cost
-            else:
-                pnl = (long_m - short_m) - net          # position gain minus debit
+            pnl = out["pnl"]
         results.append(pnl / risk)
     return results
 
