@@ -159,7 +159,24 @@ def run_scan(day: date | None = None) -> dict:
             f"Chair output yielded 0 parseable specs and no empty-day object.\n---\n{chair_text}")
     SPEC_FILE.parent.mkdir(parents=True, exist_ok=True)
     SPEC_FILE.write_text(json.dumps(specs, indent=2))
+
+    from swarm.backtest.gate import gate_spec
+    from swarm.tools.uw import UWMCPClient
+    gated = []
+    if specs:
+        uw = UWMCPClient()
+        uw.initialize()
+        for sp in specs:
+            try:
+                gated.append(gate_spec(sp, uw))
+            except Exception as e:  # gate failure must not kill the scan
+                sp = dict(sp)
+                sp["backtest_gate"] = "pending_backtest"
+                sp["gate_error"] = str(e)[:200]
+                gated.append(sp)
+        SPEC_FILE.write_text(json.dumps(gated, indent=2))
+
     matches = re.findall(r'"summary"\s*:\s*"([^"]+)"', chair_text)
     summary = matches[-1] if matches else chair_text[:300]
-    return {"date": day.isoformat(), "candidates": candidates, "n_specs": len(specs),
-            "specs": specs, "empty_day": empty_day and not specs, "summary": summary}
+    return {"date": day.isoformat(), "candidates": candidates, "n_specs": len(gated),
+            "specs": gated, "empty_day": empty_day and not specs, "summary": summary}
