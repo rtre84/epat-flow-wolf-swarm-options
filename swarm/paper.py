@@ -35,26 +35,36 @@ def save_specs(specs: list[dict]) -> None:
     SPEC_FILE.write_text(json.dumps(specs, indent=2))
 
 
-def cmd_execute() -> int:
-    specs = load_specs()
-    uw = _uw()
-    done, errors = 0, 0
+def fill_approved(specs: list[dict], uw: UWMCPClient) -> tuple[list[str], list[dict]]:
+    """Fill every approved, not-yet-executed spec in-place (stamps status).
+
+    Returns (filled trade_ids, skipped entries with the failure reason).
+    Per-spec failures never abort the remaining fills.
+    """
+    from swarm.models import TradeSpec
+    filled: list[str] = []
+    skipped: list[dict] = []
     for sp in specs:
         if sp.get("backtest_gate") != "approved" or sp.get("status") == "executed":
             continue
-        from swarm.models import TradeSpec
         spec = TradeSpec.model_validate(sp)
         try:
             rec = execute_paper(spec, uw)
             sp["status"] = "executed"
-            done += 1
+            filled.append(rec.trade_id)
             print(f"[fill] {rec.trade_id} {rec.strategy} qty={rec.qty} "
                   f"net=${rec.net_usd} risk=${rec.committed_risk_usd}")
         except Exception as e:
-            errors += 1
+            skipped.append({"trade_id": spec.trade_id, "error": str(e)[:200]})
             print(f"[skip] {spec.trade_id}: {e}", file=sys.stderr)
+    return filled, skipped
+
+
+def cmd_execute() -> int:
+    specs = load_specs()
+    filled, skipped = fill_approved(specs, _uw())
     save_specs(specs)
-    print(f"=== EXECUTE: {done} filled, {errors} skipped ===")
+    print(f"=== EXECUTE: {len(filled)} filled, {len(skipped)} skipped ===")
     return 0
 
 

@@ -17,6 +17,7 @@ from crewai import Agent, Crew, Process, Task
 
 from swarm.llm import LLMConfig
 from swarm import prompts
+from swarm.learn import chair_calibration
 from swarm.tools.uw_tools import UW_TOOLS
 
 RAW_DIR = Path(__file__).resolve().parent.parent / "reports" / "raw"
@@ -136,14 +137,18 @@ def run_scan(day: date | None = None) -> dict:
             (RAW_DIR / f"{day.isoformat()}_{stage}.txt").write_text(text)
         dossiers_and_skeptics.append(f"### Candidate {rank}: {ticker}\nDOSSIER:\n{d_text}\nSKEPTIC:\n{s_text}\n")
 
-    # Stage C: chair
+    # Stage C: chair (learning loop may raise the chair's confidence bar)
+    calibration = chair_calibration()
     chair_agent = _agent("chair")
+    chair_desc = (prompts.load("chair") +
+                  f"\nScan date: {day.isoformat()}\n\nREGIME BRIEF:\n{regime_text}\n\n"
+                  f"SCOUT OUTPUT:\n{scout_text}\n\nPER-CANDIDATE PACKAGES:\n" +
+                  "\n".join(dossiers_and_skeptics) +
+                  "\n\nOutput ONLY the JSON specs (or the empty-day object).")
+    if calibration:
+        chair_desc += "\n\n" + calibration
     chair_task = Task(
-        description=(prompts.load("chair") +
-                     f"\nScan date: {day.isoformat()}\n\nREGIME BRIEF:\n{regime_text}\n\n"
-                     f"SCOUT OUTPUT:\n{scout_text}\n\nPER-CANDIDATE PACKAGES:\n" +
-                     "\n".join(dossiers_and_skeptics) +
-                     "\n\nOutput ONLY the JSON specs (or the empty-day object)."),
+        description=chair_desc,
         expected_output="JSON TradeSpec objects exactly per schema, or the empty-day JSON",
         agent=chair_agent,
     )
