@@ -23,7 +23,7 @@ from swarm.tools.uw_tools import UW_TOOLS
 
 RAW_DIR = Path(__file__).resolve().parent.parent / "reports" / "raw"
 SPEC_FILE = specstore.SPEC_FILE  # re-export: daily.py reads crew.SPEC_FILE
-MAX_CANDIDATES = 5
+MAX_CANDIDATES = 8
 
 TOOL_HINT = "\n\nUnusual Whales tools available: " + ", ".join(
     t.name for t in UW_TOOLS)

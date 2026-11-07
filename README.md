@@ -10,7 +10,7 @@ A multi-agent LLM swarm that mines, validates, and paper-trades options ideas fr
 UW MCP data
    │
    ▼
-┌─ Stage A ─ regime analyst → flow scout ──────────────→ 5 tickers max
+┌─ Stage A ─ regime analyst → flow scout ──────────────→ 8 tickers max
 ├─ Stage B ─ per-ticker dossier → skeptic (antagonist) ─→ surviving ideas
 ├─ Stage C ─ chair → TradeSpec JSON (pydantic-validated) → data/specs/trade_specs.json
 │
@@ -119,8 +119,9 @@ cp .env.example .env              # then fill in:
 
 ## Limitations (honest)
 
-- UW Basic tier: no SMA/RSI endpoints — computed locally; ~60–80 calls/scan budget
-  (5 candidates × dossier+skeptic verification + stage A)
+- UW Basic tier: no SMA/RSI endpoints — computed locally; ~80–110 calls/scan budget
+  (8 candidates × dossier+skeptic verification + stage A; funnel widened in
+  Phase 6.1: $100k premium floor, non-sweep block pass)
 - IV model ignores vol risk premium/skew; directional, not tradable-grade
 - Entry triggers are advisory; fills happen at latest close
 - No bid/ask spread, theta decay, or early-exercise modeling in the backtest

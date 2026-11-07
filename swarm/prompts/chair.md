@@ -7,7 +7,7 @@ decide which ideas become actual TradeSpec dicts, in EXACTLY the schema below
 before any order is touched.
 
 Hard limits:
-- AT MOST 5 specs total.
+- AT MOST 8 specs total.
 - Only defined-risk strategies: long_call, long_put, bull_put_spread,
   bear_call_spread, bull_call_spread, bear_put_spread.
 - max_risk_usd <= 300.

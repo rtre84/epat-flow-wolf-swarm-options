@@ -12,7 +12,8 @@ how it behaves. Any refactor must update it in the same change._
 | 3 | Backtest gate (archetype simulator) + crew wiring | `f16623c` | done |
 | 4 | Paper executor, tracker, IB adapter stub, CLI | `66c1ac6` | done |
 | 5 | Daily flow (`swarm/daily.py`) + learning loop (`swarm/learn.py`) | `f1d0a23` | done |
-| 6 | Spec store (accumulate by `trade_id`), scout cap → prompt-native 5, scan CLI | `6db770d` | code + tests green |
+| 6 | Spec store (accumulate by `trade_id`), scout cap → prompt-native 5, scan CLI | `6db770d` | done |
+| 6.1 | Funnel widening: 8 candidates, $100k premium floor, non-sweep block pass | (this change) | done |
 
 Test suite: `./.venv/bin/python -m unittest discover -s tests` — **32 tests, all green**
 (21 pre-existing + 11 in `tests/test_specstore.py`).
@@ -26,7 +27,7 @@ Test suite: `./.venv/bin/python -m unittest discover -s tests` — **32 tests, a
   chair's empty-day object) are dropped on load. Import-light on purpose:
   tests must not import `swarm.crew` (it spawns the UW MCP server at import).
 - `swarm/crew.py` — `run_scan(day)`: stage A (regime → scout, one crew), stage B
-  per-candidate (dossier → skeptic, capped by `MAX_CANDIDATES=5`), stage C chair
+  per-candidate (dossier → skeptic, capped by `MAX_CANDIDATES=8`), stage C chair
   → JSON specs. Persists every stage transcript to `reports/raw/<date>_<stage>.txt`,
   persists gated specs via `specstore.save_merged` (ungated merge first so a
   gate crash cannot lose the scan, then the gated merge replaces the same
@@ -35,7 +36,9 @@ Test suite: `./.venv/bin/python -m unittest discover -s tests` — **32 tests, a
   touching files or LLM. Chair description appends `chair_calibration()`
   output when non-empty (`swarm/learn.py`, imported at module top — no cycle).
   **Phase 6 changes:** the in-code "keep it to 3 candidates" scout cap is
-  removed — the prompt's AT MOST 5 governs; `SPEC_FILE` is now a re-export of
+  removed — the prompt's candidate cap governs (AT MOST 8 since Phase 6.1:
+  `min_premium=100000` + a non-sweep ask-side block pass in `flow_scout.md`,
+  `MAX_CANDIDATES=8` in code, AT MOST 8 specs in `chair.md`); `SPEC_FILE` is now a re-export of
   `specstore.SPEC_FILE` (same absolute path; `daily.py` reads `crew.SPEC_FILE`);
   scan-only CLI `main(argv)` accepts an optional `YYYY-MM-DD` date
   (`python -m swarm.crew [date]`) and prints `total_specs` (accumulated count).

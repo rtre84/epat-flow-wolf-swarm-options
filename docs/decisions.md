@@ -28,8 +28,11 @@ re-derive behavior.
    history. Records without a `trade_id` (the chair's empty-day object) are
    dropped on load. `run_scan` merges ungated specs first (a gate crash must
    not lose the LLM spend), then merges the gated versions over the same ids.
-   Scout candidate volume is prompt-native (AT MOST 5 in `flow_scout.md`);
-   there is no in-code candidate cap below that.
+   Scout candidate volume is prompt-native (AT MOST 8 in `flow_scout.md`,
+   mirrored by `MAX_CANDIDATES=8`); the funnel is deliberately wide —
+   `min_premium=100000`, a non-sweep ask-side block pass, and up to 8
+   candidates — because killed ideas never become TradeSpecs, so spec volume
+   scales with candidate volume.
 
 ## Gate (deterministic)
 
