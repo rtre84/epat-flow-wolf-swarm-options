@@ -14,7 +14,7 @@ how it behaves. Any refactor must update it in the same change._
 | 5 | Daily flow (`swarm/daily.py`) + learning loop (`swarm/learn.py`) | `f1d0a23` | done |
 | 6 | Spec store (accumulate by `trade_id`), scout cap → prompt-native 5, scan CLI | `6db770d` | done |
 | 6.1 | Funnel widening: 8 candidates, $100k premium floor, non-sweep block pass | `576a41c` | done |
-| 6.2 | Kickoff retry on empty LLM responses; scout `expected_output` cap fix | (this change) | done |
+| 6.2 | Kickoff retry on empty LLM responses; scout `expected_output` cap fix | `a82407f` | done |
 
 Test suite: `./.venv/bin/python -m unittest discover -s tests` — **32 tests, all green**
 (21 pre-existing + 11 in `tests/test_specstore.py`).
