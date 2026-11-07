@@ -73,6 +73,7 @@ def run_day(day: date | None = None) -> dict:
         "date": day.isoformat(),
         "weekend": weekend,
         "scan": {k: scan.get(k) for k in ("candidates", "n_specs", "empty_day", "summary")},
+        "total_specs": len(specs),
         "filled": filled,
         "fill_errors": skip_errors,
         "book": None if marked is None else {k: marked.get(k) for k in

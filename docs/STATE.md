@@ -1,6 +1,6 @@
 # FlowWolf — Current State
 
-_Last updated: 2026-11-06. This file is the source of truth for what exists and
+_Last updated: 2026-11-07. This file is the source of truth for what exists and
 how it behaves. Any refactor must update it in the same change._
 
 ## Phase status
@@ -11,21 +11,34 @@ how it behaves. Any refactor must update it in the same change._
 | 2 | Prompts as `.md` config bricks, 3-stage crew, UW tool wrappers | `c93d5a1` / `9a91a67` | done |
 | 3 | Backtest gate (archetype simulator) + crew wiring | `f16623c` | done |
 | 4 | Paper executor, tracker, IB adapter stub, CLI | `66c1ac6` | done |
-| 5 | Daily flow (`swarm/daily.py`) + learning loop (`swarm/learn.py`) | **uncommitted** | code + tests green |
+| 5 | Daily flow (`swarm/daily.py`) + learning loop (`swarm/learn.py`) | `f1d0a23` | done |
+| 6 | Spec store (accumulate by `trade_id`), scout cap → prompt-native 5, scan CLI | (this change) | code + tests green |
 
-Test suite: `./.venv/bin/python -m unittest discover -s tests` — **21 tests, all green**
-(11 pre-existing + 10 in `tests/test_learn.py`).
+Test suite: `./.venv/bin/python -m unittest discover -s tests` — **32 tests, all green**
+(21 pre-existing + 11 in `tests/test_specstore.py`).
 
-## Module map (as of Phase 5)
+## Module map (as of Phase 6)
 
+- `swarm/specstore.py` — **new (Phase 6).** Owns `data/specs/trade_specs.json`
+  as an accumulating store: `save_merged(new)` upserts by `trade_id` (new ids
+  append; a re-scan of the same date+ticker replaces the older record; an
+  empty scan never discards history). Records without `trade_id` (e.g. the
+  chair's empty-day object) are dropped on load. Import-light on purpose:
+  tests must not import `swarm.crew` (it spawns the UW MCP server at import).
 - `swarm/crew.py` — `run_scan(day)`: stage A (regime → scout, one crew), stage B
   per-candidate (dossier → skeptic, capped by `MAX_CANDIDATES=5`), stage C chair
   → JSON specs. Persists every stage transcript to `reports/raw/<date>_<stage>.txt`,
-  writes gated specs to `crew.SPEC_FILE` (absolute path under `data/specs/`).
-  Returns dict with `candidates`, `n_specs`, `specs`, `empty_day`, `summary`.
-  Weekend (`weekday() >= 5`) early-returns without touching files or LLM.
-  **Phase 5 change:** chair description now appends `chair_calibration()`
+  persists gated specs via `specstore.save_merged` (ungated merge first so a
+  gate crash cannot lose the scan, then the gated merge replaces the same
+  `trade_id`s). Returns dict with `candidates`, `n_specs`, `specs`,
+  `empty_day`, `summary`. Weekend (`weekday() >= 5`) early-returns without
+  touching files or LLM. Chair description appends `chair_calibration()`
   output when non-empty (`swarm/learn.py`, imported at module top — no cycle).
+  **Phase 6 changes:** the in-code "keep it to 3 candidates" scout cap is
+  removed — the prompt's AT MOST 5 governs; `SPEC_FILE` is now a re-export of
+  `specstore.SPEC_FILE` (same absolute path; `daily.py` reads `crew.SPEC_FILE`);
+  scan-only CLI `main(argv)` accepts an optional `YYYY-MM-DD` date
+  (`python -m swarm.crew [date]`) and prints `total_specs` (accumulated count).
 - `swarm/paper.py` — CLI (`execute`, `mark`). **Phase 5 change:** the fill loop
   was extracted into `fill_approved(specs, uw) -> (filled_ids, skipped_entries)`
   which validates each approved spec via `TradeSpec.model_validate`, stamps
@@ -33,10 +46,11 @@ Test suite: `./.venv/bin/python -m unittest discover -s tests` — **21 tests, a
   bad fill cannot abort the rest. `cmd_execute` is now a thin wrapper.
   Note: `paper.SPEC_FILE` is cwd-relative (`data/specs/trade_specs.json`),
   identical to `crew.SPEC_FILE` when run from the repo root.
-- `swarm/daily.py` — **new.** `run_day(day)` = `run_scan` → read
+- `swarm/daily.py` — `run_day(day)` = `run_scan` → read
   `crew.SPEC_FILE` → `fill_approved` on pending approved specs → write specs
   back when filled → `mark_all` if any open order exists → JSON report dict
-  (`date`, `weekend`, `scan`, `filled`, `fill_errors`, `book`). CLI:
+  (`date`, `weekend`, `scan`, `total_specs`, `filled`, `fill_errors`, `book`;
+  `total_specs` is the accumulated spec count after the scan). CLI:
   `./.venv/bin/python -m swarm.daily [YYYY-MM-DD]`. The `UWMCPClient` is
   created lazily (each instance spawns an MCP server process).
 - `swarm/learn.py` — **new.** `chair_calibration(summary_path=None)` reads
@@ -62,7 +76,7 @@ Test suite: `./.venv/bin/python -m unittest discover -s tests` — **21 tests, a
 
 | Path | Contents |
 |---|---|
-| `data/specs/trade_specs.json` | gated ideas (`backtest_gate`: `approved` / `pending_backtest` / reject, plus `status`) |
+| `data/specs/trade_specs.json` | accumulated gated ideas, upserted by `trade_id` (`backtest_gate`: `approved` / `pending_backtest` / reject, plus `status`); scans never overwrite history |
 | `data/orders/*.json` | paper fill records |
 | `data/pnl/summary.json` | tracker summary (learning-loop input) |
 | `data/backtests/cache/` | 5y close series per ticker |
@@ -75,7 +89,8 @@ Test suite: `./.venv/bin/python -m unittest discover -s tests` — **21 tests, a
    through a real LLM scan. Safe to leaves as-is: fills are paper-only and
    per-spec errors are caught.
 2. **Path inconsistency:** `paper.SPEC_FILE` (cwd-relative) vs
-   `crew.SPEC_FILE` (absolute). `docker`-free daily flow uses `crew.SPEC_FILE`.
+   `crew.SPEC_FILE` (absolute, now a re-export of `specstore.SPEC_FILE`).
+   `docker`-free daily flow uses `crew.SPEC_FILE`.
    Do not "fix" this in passing — any unification is a refactor demanding a
    doc update first.
 3. `reports/parse_warnings.log` is touched but never filled with content.

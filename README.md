@@ -47,7 +47,8 @@ swarm/
   main.py            # Phase 1 smoke checks (UW / schema / LLM)
   llm.py             # OpenAI-compatible client (SWARM_MODEL)
   models.py          # TradeSpec, SpecStatus pydantic models
-  crew.py            # run_scan(): 3-stage CrewAI orchestration
+  specstore.py       # accumulating spec store (upsert by trade_id)
+  crew.py            # run_scan(): 3-stage CrewAI orchestration + scan CLI
   daily.py           # one-command day: run_scan → fill approved → mark book
   learn.py           # chair_calibration(): P&L facts → chair prompt directive
   prompts/             # all agent prompts as .md files (config, not code)
@@ -86,8 +87,10 @@ cp .env.example .env              # then fill in:
 # Verify connectivity + schema + LLM round-trip
 ./.venv/bin/python -m swarm.main
 
-# Full scan: agents propose → gate backtests → writes data/specs/trade_specs.json
+# Full scan (no fills): agents propose → gate backtests → specs accumulate
+# in data/specs/trade_specs.json (upserted by trade_id; history is kept)
 ./.venv/bin/python -m swarm.crew
+./.venv/bin/python -m swarm.crew 2026-11-05   # explicit scan date
 
 # Daily flow (one command): scan → fill approved specs → mark the book → JSON report
 # (weekends skip the scan but still mark open paper positions)
@@ -116,7 +119,8 @@ cp .env.example .env              # then fill in:
 
 ## Limitations (honest)
 
-- UW Basic tier: no SMA/RSI endpoints — computed locally; ~40 calls/scan budget
+- UW Basic tier: no SMA/RSI endpoints — computed locally; ~60–80 calls/scan budget
+  (5 candidates × dossier+skeptic verification + stage A)
 - IV model ignores vol risk premium/skew; directional, not tradable-grade
 - Entry triggers are advisory; fills happen at latest close
 - No bid/ask spread, theta decay, or early-exercise modeling in the backtest
@@ -133,7 +137,7 @@ cp .env.example .env              # then fill in:
 
 | Path | Contents |
 |---|---|
-| `data/specs/trade_specs.json` | generated ideas + gate verdicts |
+| `data/specs/trade_specs.json` | accumulated ideas + gate verdicts (upserted by trade_id) |
 | `data/orders/` | paper fill records |
 | `data/pnl/summary.json` | realized P&L, win rate, mean R |
 | `data/backtests/cache/` | 5y close series per ticker |

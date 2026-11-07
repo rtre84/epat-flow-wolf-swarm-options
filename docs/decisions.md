@@ -21,6 +21,15 @@ re-derive behavior.
    `status != "executed"`, validates via `TradeSpec.model_validate`, stamps
    `status = "executed"` on success, returns `(filled_ids, skipped)`, catches
    per-spec exceptions (one bad fill never aborts the day).
+5. **The spec file accumulates; scans never overwrite it.**
+   `swarm/specstore.py` owns `data/specs/trade_specs.json`: `save_merged`
+   upserts by `trade_id` — new ids append, a re-scan of the same
+   date+ticker replaces the older record, an empty-day scan preserves all
+   history. Records without a `trade_id` (the chair's empty-day object) are
+   dropped on load. `run_scan` merges ungated specs first (a gate crash must
+   not lose the LLM spend), then merges the gated versions over the same ids.
+   Scout candidate volume is prompt-native (AT MOST 5 in `flow_scout.md`);
+   there is no in-code candidate cap below that.
 
 ## Gate (deterministic)
 
@@ -55,6 +64,9 @@ Constants: `WIN_RATE_FLOOR = 0.30`, `MEAN_R_FLOOR = 0.05`,
 ## Conventions & gotchas (for tests/tools)
 
 - Test framework is **unittest** (pytest is not installed).
+- Tests must not import `swarm.crew` (module import spawns the UW MCP
+  server process). Spec-store logic lives in `swarm/specstore.py` and is
+  imported directly by `tests/test_specstore.py`.
 - `reports/raw` and both `ORDERS_DIR` (execute/paper.py and
   execute/tracker.py) must be patched to a tmpdir together; `PNL_DIR` in
   tracker.py must be patched and `.mkdir()`-ed manually.

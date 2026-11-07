@@ -10,18 +10,19 @@ post-mortems. The chair's JSON blocks are the ONLY thing downstream trusts.
 """
 import json
 import re
+import sys
 from datetime import date
 from pathlib import Path
 
 from crewai import Agent, Crew, Process, Task
 
 from swarm.llm import LLMConfig
-from swarm import prompts
+from swarm import prompts, specstore
 from swarm.learn import chair_calibration
 from swarm.tools.uw_tools import UW_TOOLS
 
 RAW_DIR = Path(__file__).resolve().parent.parent / "reports" / "raw"
-SPEC_FILE = Path(__file__).resolve().parent.parent / "data" / "specs" / "trade_specs.json"
+SPEC_FILE = specstore.SPEC_FILE  # re-export: daily.py reads crew.SPEC_FILE
 MAX_CANDIDATES = 5
 
 TOOL_HINT = "\n\nUnusual Whales tools available: " + ", ".join(
@@ -99,7 +100,7 @@ def run_scan(day: date | None = None) -> dict:
     )
     scout_agent = _agent("flow_scout")
     scout_task = Task(
-        description=prompts.load("flow_scout") + tool_hint + "\nUse ONLY the regime brief from the previous task as context. Keep it to 3 candidates for cost discipline unless the tape is exceptional.",
+        description=prompts.load("flow_scout") + tool_hint + "\nUse ONLY the regime brief from the previous task as context. The prompt's AT MOST 5 candidates cap governs.",
         expected_output="the exact mandated CANDIDATES block with at most 3 ranked candidates",
         agent=scout_agent,
         context=[regime_task],
@@ -162,8 +163,7 @@ def run_scan(day: date | None = None) -> dict:
         RAW_DIR.parent.mkdir(parents=True, exist_ok=True)
         (RAW_DIR / f"{day.isoformat()}_parse_warning.txt").write_text(
             f"Chair output yielded 0 parseable specs and no empty-day object.\n---\n{chair_text}")
-    SPEC_FILE.parent.mkdir(parents=True, exist_ok=True)
-    SPEC_FILE.write_text(json.dumps(specs, indent=2))
+    specstore.save_merged(specs)  # ungated merge first: a gate crash must not lose the scan
 
     from swarm.backtest.gate import gate_spec
     from swarm.tools.uw import UWMCPClient
@@ -179,9 +179,37 @@ def run_scan(day: date | None = None) -> dict:
                 sp["backtest_gate"] = "pending_backtest"
                 sp["gate_error"] = str(e)[:200]
                 gated.append(sp)
-        SPEC_FILE.write_text(json.dumps(gated, indent=2))
+        specstore.save_merged(gated)  # same trade_ids replace the ungated versions above
 
     matches = re.findall(r'"summary"\s*:\s*"([^"]+)"', chair_text)
     summary = matches[-1] if matches else chair_text[:300]
     return {"date": day.isoformat(), "candidates": candidates, "n_specs": len(gated),
             "specs": gated, "empty_day": empty_day and not specs, "summary": summary}
+
+
+def main(argv: list[str]) -> int:
+    """Scan-only CLI: run the crew pipeline for a date, persist merged specs.
+
+      ./.venv/bin/python -m swarm.crew              # scan for today
+      ./.venv/bin/python -m swarm.crew 2026-11-05   # scan stamped with an explicit date
+
+    No fills, no marking — use swarm.daily for the full flow.
+    """
+    day = None
+    if argv:
+        try:
+            day = date.fromisoformat(argv[0])
+        except ValueError:
+            print(f"bad date (use YYYY-MM-DD): {argv[0]}", file=sys.stderr)
+            return 2
+    scan = run_scan(day)
+    print(json.dumps({
+        "date": scan.get("date"),
+        **{k: scan.get(k) for k in ("candidates", "n_specs", "empty_day", "summary")},
+        "total_specs": len(specstore.load_existing()),
+    }, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))
