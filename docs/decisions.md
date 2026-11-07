@@ -67,6 +67,10 @@ Constants: `WIN_RATE_FLOOR = 0.30`, `MEAN_R_FLOOR = 0.05`,
 ## Conventions & gotchas (for tests/tools)
 
 - Test framework is **unittest** (pytest is not installed).
+- The LLM provider intermittently returns empty completions; crew kickoffs
+  retry (`_kickoff`, 3 attempts, fresh `Crew` per attempt, 2s pause) instead
+  of aborting a scan. Only `ValueError` containing "None or empty" is
+  treated as transient.
 - Tests must not import `swarm.crew` (module import spawns the UW MCP
   server process). Spec-store logic lives in `swarm/specstore.py` and is
   imported directly by `tests/test_specstore.py`.

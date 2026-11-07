@@ -11,8 +11,10 @@ post-mortems. The chair's JSON blocks are the ONLY thing downstream trusts.
 import json
 import re
 import sys
+import time
 from datetime import date
 from pathlib import Path
+from typing import Callable
 
 from crewai import Agent, Crew, Process, Task
 
@@ -50,6 +52,27 @@ def _run(stage: str, day: date, description: str, agent: Agent) -> str:
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     (RAW_DIR / f"{day.isoformat()}_{stage}.txt").write_text(text)
     return text
+
+
+KICKOFF_ATTEMPTS = 3
+
+
+def _kickoff(build: Callable[[], Crew]) -> object:
+    """Crew kickoff with retry. The LLM provider intermittently returns an
+    empty completion, which CrewAI raises as ValueError("Invalid response
+    from LLM call - None or empty.") — one empty response must not abort a
+    whole scan. A fresh Crew object is built per attempt (task/agent objects
+    may carry state from the failed run)."""
+    for attempt in range(1, KICKOFF_ATTEMPTS + 1):
+        try:
+            return build().kickoff()
+        except ValueError as e:
+            transient = "None or empty" in str(e)
+            if not transient or attempt == KICKOFF_ATTEMPTS:
+                raise
+            print(f"[retry] crew kickoff attempt {attempt}/{KICKOFF_ATTEMPTS} "
+                  f"returned an empty LLM response, retrying", file=sys.stderr)
+            time.sleep(2)
 
 
 def _extract_candidates(scout_text: str) -> list[str]:
@@ -100,13 +123,13 @@ def run_scan(day: date | None = None) -> dict:
     )
     scout_agent = _agent("flow_scout")
     scout_task = Task(
-        description=prompts.load("flow_scout") + tool_hint + "\nUse ONLY the regime brief from the previous task as context. The prompt's AT MOST 5 candidates cap governs.",
-        expected_output="the exact mandated CANDIDATES block with at most 3 ranked candidates",
+        description=prompts.load("flow_scout") + tool_hint + "\nUse ONLY the regime brief from the previous task as context. The prompt's AT MOST 8 candidates cap governs.",
+        expected_output="the exact mandated CANDIDATES block",
         agent=scout_agent,
         context=[regime_task],
     )
-    stage_a = Crew(agents=[regime_agent, scout_agent], tasks=[regime_task, scout_task],
-                   process=Process.sequential, verbose=False).kickoff()
+    _kickoff(lambda: Crew(agents=[regime_agent, scout_agent], tasks=[regime_task, scout_task],
+                          process=Process.sequential, verbose=False))
     regime_text = str(regime_task.output.raw if regime_task.output else "")
     scout_text = str(scout_task.output.raw if scout_task.output else "")
     for stage, text in [("regime", regime_text), ("scout", scout_text)]:
@@ -130,8 +153,8 @@ def run_scan(day: date | None = None) -> dict:
             agent=skeptic_agent,
             context=[d_task],
         )
-        sub = Crew(agents=[dossier_agent, skeptic_agent], tasks=[d_task, s_task],
-                   process=Process.sequential, verbose=False).kickoff()
+        _kickoff(lambda: Crew(agents=[dossier_agent, skeptic_agent], tasks=[d_task, s_task],
+                              process=Process.sequential, verbose=False))
         d_text = str(d_task.output.raw if d_task.output else "")
         s_text = str(s_task.output.raw if s_task.output else "")
         for stage, text in [(f"dossier_{rank}_{ticker}", d_text), (f"skeptic_{rank}_{ticker}", s_text)]:
@@ -153,8 +176,8 @@ def run_scan(day: date | None = None) -> dict:
         expected_output="JSON TradeSpec objects exactly per schema, or the empty-day JSON",
         agent=chair_agent,
     )
-    chair_out = Crew(agents=[chair_agent], tasks=[chair_task], process=Process.sequential,
-                     verbose=False).kickoff()
+    _kickoff(lambda: Crew(agents=[chair_agent], tasks=[chair_task], process=Process.sequential,
+                          verbose=False))
     chair_text = str(chair_task.output.raw if chair_task.output else "")
     (RAW_DIR / f"{day.isoformat()}_chair.txt").write_text(chair_text)
 

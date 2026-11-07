@@ -14,6 +14,7 @@ how it behaves. Any refactor must update it in the same change._
 | 5 | Daily flow (`swarm/daily.py`) + learning loop (`swarm/learn.py`) | `f1d0a23` | done |
 | 6 | Spec store (accumulate by `trade_id`), scout cap → prompt-native 5, scan CLI | `6db770d` | done |
 | 6.1 | Funnel widening: 8 candidates, $100k premium floor, non-sweep block pass | `576a41c` | done |
+| 6.2 | Kickoff retry on empty LLM responses; scout `expected_output` cap fix | (this change) | done |
 
 Test suite: `./.venv/bin/python -m unittest discover -s tests` — **32 tests, all green**
 (21 pre-existing + 11 in `tests/test_specstore.py`).
@@ -38,7 +39,14 @@ Test suite: `./.venv/bin/python -m unittest discover -s tests` — **32 tests, a
   **Phase 6 changes:** the in-code "keep it to 3 candidates" scout cap is
   removed — the prompt's candidate cap governs (AT MOST 8 since Phase 6.1:
   `min_premium=100000` + a non-sweep ask-side block pass in `flow_scout.md`,
-  `MAX_CANDIDATES=8` in code, AT MOST 8 specs in `chair.md`); `SPEC_FILE` is now a re-export of
+  `MAX_CANDIDATES=8` in code, AT MOST 8 specs in `chair.md`);
+  **Phase 6.2:** every crew kickoff goes through `_kickoff(build)` which
+  retries up to `KICKOFF_ATTEMPTS=3` times on the provider's transient
+  empty completions (`ValueError: Invalid response from LLM call - None or
+  empty.`), building a fresh `Crew` per attempt; the scout task's
+  `expected_output` no longer says "at most 3 ranked candidates" (a
+  leftover from the original 3-cap that silently pinned every scan to
+  3 candidates); `SPEC_FILE` is now a re-export of
   `specstore.SPEC_FILE` (same absolute path; `daily.py` reads `crew.SPEC_FILE`);
   scan-only CLI `main(argv)` accepts an optional `YYYY-MM-DD` date
   (`python -m swarm.crew [date]`) and prints `total_specs` (accumulated count).
