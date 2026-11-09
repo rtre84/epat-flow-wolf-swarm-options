@@ -1,6 +1,37 @@
 [
   {
-    "specs": [],
-    "summary": "All three flow-flagged candidates (CRWV, TSLA, QQQ) failed chair review: every dossier scored 2\u20133 (below the 6.0 threshold) and every skeptic either affirmed NO-TRADE or explicitly killed the idea, citing stale/underwater sweep flow, missing dark-pool and insider confirmation, dealer call-walls directly overhead, punitive front-week IV, and a confirmed mega-cap earnings wave (MSFT/GOOGL/AMZN/INTC, 7\u201323.5% implied moves) landing inside the trade horizon. The final tide check corroborated the risk-off regime brief, with put premium accelerating ($211K \u2192 $422K by 08:10 ET) and net volume negative in every interval (worst -2,104). Zero specs issued for 2026-10-23 \u2014 capital stays flat ahead of the 10/26\u201310/27 earnings cluster; re-scan for confirmed, side-evidenced flow after the event wave clears."
+    "trade_id": "2026-11-06_MU",
+    "scan_date": "2026-11-06",
+    "underlying": "MU",
+    "strategy": "bull_put_spread",
+    "expiry": "monthly",
+    "max_risk_usd": 300,
+    "entry_trigger": "While MU trades above $690.00 and holds above the $687.52 gamma flip during regular hours, sell the $680 put and buy the $675 put in the December monthly cycle for a net credit of $2.00 or more (1 contract).",
+    "invalidation": "Close the spread immediately if MU prints a regular-session close below $687.52 (gamma flip).",
+    "confidence": 6,
+    "signals": [
+      "flow_sweep_green",
+      "dark_pool_acc",
+      "congress_buy",
+      "max_pain_above_spot"
+    ],
+    "backtest_gate": "approved"
+  },
+  {
+    "trade_id": "2026-11-03_MU",
+    "scan_date": "2026-11-03",
+    "underlying": "MU",
+    "strategy": "bull_put_spread",
+    "expiry": "monthly",
+    "max_risk_usd": 250,
+    "entry_trigger": "Buy entry only if MU reclaims and holds above the 690 gamma magnet on the 5-minute close.",
+    "invalidation": "Exit the spread if MU closes below the 687.52 gamma flip.",
+    "confidence": 5,
+    "signals": [
+      "flow_sweep_green",
+      "dark_pool_acc",
+      "max_pain_pull_above_spot"
+    ],
+    "backtest_gate": "approved"
   }
 ]

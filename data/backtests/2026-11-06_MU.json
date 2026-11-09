@@ -1,0 +1,48 @@
+{
+  "ticker": "MU",
+  "strategy": "bull_put_spread",
+  "profiles": {
+    "7d": {
+      "dte": 7,
+      "n": 136,
+      "win_rate": 0.757,
+      "mean_r": 0.111,
+      "median_r": 0.346,
+      "max_r": 0.814,
+      "min_r": -1.0
+    },
+    "30d": {
+      "dte": 30,
+      "n": 227,
+      "win_rate": 0.714,
+      "mean_r": 0.225,
+      "median_r": 0.586,
+      "max_r": 1.258,
+      "min_r": -1.0
+    },
+    "7d_recent": {
+      "dte": 7,
+      "n": 22,
+      "win_rate": 0.682,
+      "mean_r": 0.059,
+      "median_r": 0.354,
+      "max_r": 0.745,
+      "min_r": -1.0
+    },
+    "30d_recent": {
+      "dte": 30,
+      "n": 22,
+      "win_rate": 0.5,
+      "mean_r": 0.027,
+      "median_r": 0.66,
+      "max_r": 1.185,
+      "min_r": -1.0
+    }
+  },
+  "7d_pass": true,
+  "30d_pass": true,
+  "gate_pass": true,
+  "7d_recent_pass": true,
+  "30d_recent_pass": true,
+  "trade_id": "2026-11-06_MU"
+}
