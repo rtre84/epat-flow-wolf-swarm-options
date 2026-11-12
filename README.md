@@ -138,7 +138,7 @@ cp .env.example .env              # then fill in:
 
 | Path | Contents |
 |---|---|
-| `data/specs/trade_specs.json` | accumulated ideas + gate verdicts (upserted by trade_id) |
+| `data/specs/trade_specs.json` | accumulated ideas + gate verdicts (upserted by trade_id; approved records are never replaced) |
 | `data/orders/` | paper fill records |
 | `data/pnl/summary.json` | realized P&L, win rate, mean R |
 | `data/backtests/cache/` | 5y close series per ticker |

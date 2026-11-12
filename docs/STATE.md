@@ -15,9 +15,10 @@ how it behaves. Any refactor must update it in the same change._
 | 6 | Spec store (accumulate by `trade_id`), scout cap → prompt-native 5, scan CLI | `6db770d` | done |
 | 6.1 | Funnel widening: 8 candidates, $100k premium floor, non-sweep block pass | `576a41c` | done |
 | 6.2 | Kickoff retry on empty LLM responses; scout `expected_output` cap fix | `a82407f` | done |
+| 6.3 | Approved-spec immutability in the spec store | (this change) | done |
 
-Test suite: `./.venv/bin/python -m unittest discover -s tests` — **32 tests, all green**
-(21 pre-existing + 11 in `tests/test_specstore.py`).
+Test suite: `./.venv/bin/python -m unittest discover -s tests` — **41 tests, all green**
+(21 pre-existing + 20 in `tests/test_specstore.py`).
 
 ## Module map (as of Phase 6)
 
@@ -25,7 +26,11 @@ Test suite: `./.venv/bin/python -m unittest discover -s tests` — **32 tests, a
   as an accumulating store: `save_merged(new)` upserts by `trade_id` (new ids
   append; a re-scan of the same date+ticker replaces the older record; an
   empty scan never discards history). Records without `trade_id` (e.g. the
-  chair's empty-day object) are dropped on load. Import-light on purpose:
+  chair's empty-day object) are dropped on load. **Phase 6.3:** a stored
+  record with `backtest_gate == "approved"` is immutable — a newer same-id
+  record is discarded (first approval wins; duplicate ids within a batch
+  keep the first; pending/rejected records stay replaceable; blockers are
+  reported on stderr). Import-light on purpose:
   tests must not import `swarm.crew` (it spawns the UW MCP server at import).
 - `swarm/crew.py` — `run_scan(day)`: stage A (regime → scout, one crew), stage B
   per-candidate (dossier → skeptic, capped by `MAX_CANDIDATES=8`), stage C chair

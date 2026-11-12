@@ -95,5 +95,75 @@ class TestSaveMerged(unittest.TestCase):
         self.assertEqual([s["trade_id"] for s in merged], ["2026-11-02_TSLA"])
 
 
+class TestApprovedImmutability(unittest.TestCase):
+    """A gate-approved record is immutable: newer same-trade_id records
+    are discarded; pending/rejected records stay replaceable."""
+
+    def test_new_record_cannot_replace_approved(self) -> None:
+        merged = merge_specs([spec("2026-11-06_MU", backtest_gate="approved", confidence=6.0)],
+                             [spec("2026-11-06_MU", backtest_gate="pending_backtest", confidence=9.0)])
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0]["backtest_gate"], "approved")
+        self.assertEqual(merged[0]["confidence"], 6.0)
+
+    def test_approved_challenger_is_also_discarded(self) -> None:
+        merged = merge_specs([spec("2026-11-06_MU", backtest_gate="approved", confidence=6.0)],
+                             [spec("2026-11-06_MU", backtest_gate="approved", confidence=9.0)])
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0]["confidence"], 6.0)  # first approval wins
+
+    def test_executed_status_is_protected_too(self) -> None:
+        merged = merge_specs([spec("2026-11-06_MU", backtest_gate="approved", status="executed")],
+                             [spec("2026-11-06_MU", backtest_gate="pending_backtest")])
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0].get("status"), "executed")
+
+    def test_pending_record_still_replaceable(self) -> None:
+        merged = merge_specs([spec("2026-11-02_TSLA", backtest_gate="pending_backtest")],
+                             [spec("2026-11-02_TSLA", backtest_gate="rejected")])
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0]["backtest_gate"], "rejected")
+
+    def test_rejected_record_still_replaceable(self) -> None:
+        merged = merge_specs([spec("2026-11-02_TSLA", backtest_gate="rejected")],
+                             [spec("2026-11-02_TSLA", backtest_gate="approved")])
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0]["backtest_gate"], "approved")
+
+    def test_same_ticker_different_date_appends(self) -> None:
+        merged = merge_specs([spec("2026-11-03_MU", backtest_gate="approved")],
+                             [spec("2026-11-04_MU")])
+        self.assertEqual([m["trade_id"] for m in merged],
+                         ["2026-11-03_MU", "2026-11-04_MU"])
+
+    def test_duplicate_ids_within_new_keep_first(self) -> None:
+        merged = merge_specs([], [spec("2026-11-06_MU", confidence=6.0),
+                                  spec("2026-11-06_MU", confidence=9.0)])
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0]["confidence"], 6.0)
+
+
+class TestSaveMergedApprovedSticky(unittest.TestCase):
+    def setUp(self) -> None:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.dir = Path(tmp.name)
+        self.path = self.dir / "trade_specs.json"
+
+    def test_save_merged_keeps_approved_over_challenger(self) -> None:
+        save_merged([spec("2026-11-06_MU", backtest_gate="approved", confidence=6.0)], self.path)
+        merged = save_merged([spec("2026-11-06_MU", backtest_gate="pending_backtest",
+                                   confidence=9.0)], self.path)
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0]["backtest_gate"], "approved")
+        self.assertEqual(merged[0]["confidence"], 6.0)
+
+    def test_save_merged_appends_new_ids_beside_approved(self) -> None:
+        save_merged([spec("2026-11-06_MU", backtest_gate="approved")], self.path)
+        merged = save_merged([spec("2026-11-06_MU"), spec("2026-11-07_SPX")], self.path)
+        self.assertEqual([s["trade_id"] for s in merged],
+                         ["2026-11-06_MU", "2026-11-07_SPX"])
+
+
 if __name__ == "__main__":
     unittest.main()

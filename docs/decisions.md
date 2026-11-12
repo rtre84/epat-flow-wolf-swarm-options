@@ -28,6 +28,11 @@ re-derive behavior.
    history. Records without a `trade_id` (the chair's empty-day object) are
    dropped on load. `run_scan` merges ungated specs first (a gate crash must
    not lose the LLM spend), then merges the gated versions over the same ids.
+   **A gate-approved record is immutable:** a newer record with the same
+   `trade_id` is discarded, never replacing it (first approval wins;
+   `status: executed` records are approved and therefore protected too).
+   Pending/rejected records remain replaceable by re-scans — only approval
+   locks the record. Blocked records are reported on stderr by `save_merged`.
    Scout candidate volume is prompt-native (AT MOST 8 in `flow_scout.md`,
    mirrored by `MAX_CANDIDATES=8`); the funnel is deliberately wide —
    `min_premium=100000`, a non-sweep ask-side block pass, and up to 8
