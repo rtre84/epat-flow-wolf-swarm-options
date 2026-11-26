@@ -17,11 +17,12 @@ how it behaves. Any refactor must update it in the same change._
 | 6.2 | Kickoff retry on empty LLM responses; scout `expected_output` cap fix | `a82407f` | done |
 | 6.3 | Approved-spec immutability in the spec store | `21b2f58` | done |
 | 7 | Risk-budget strikes (mentor feedback): width capped to `max_risk_usd`, width-scaled net floor, budget sensitivity in gate reports | `44a4765` | done |
+| 8 | Rejection log (mentor: track the skips) + close-cache refresh fix (stale-cache fill bug) | (this change) | done |
 
-Test suite: `./.venv/bin/python -m unittest discover -s tests` — **49 tests, all green**
-(21 pre-existing + 20 in `tests/test_specstore.py` + 8 in
-`tests/test_gate.py` Phase 7 tests, with `test_paper.py` updated to the
-Phase 7 fill semantics).
+Test suite: `./.venv/bin/python -m unittest discover -s tests` — **63 tests, all green**
+(21 pre-existing + 20 in `tests/test_specstore.py` + 15 in
+`tests/test_gate.py` Phase 7/8 tests + 11 in `tests/test_rejections.py`,
+with `test_paper.py` updated to the Phase 7 fill semantics).
 
 ## Module map (as of Phase 6)
 
@@ -35,6 +36,18 @@ Phase 7 fill semantics).
   keep the first; pending/rejected records stay replaceable; blockers are
   reported on stderr). Import-light on purpose:
   tests must not import `swarm.crew` (it spawns the UW MCP server at import).
+- `swarm/rejections.py` — **new (Phase 8).** Rejection log: every scanned
+  candidate that does NOT become a spec is recorded (`rejection_id` =
+  date_ticker) with the first fatal stage (`dossier_floor` / `skeptic_kill`
+  / `chair`), dossier score, verdict, and reasoning — parsed from the
+  mandated DOSSIER/SKEPTIC blocks stage B already produces (no extra LLM/UW
+  cost). `update_outcomes(uw)` fills the forward 7-trading-day return from
+  the gate's close series (point-in-time by construction). Accumulates
+  upsert-by-id like the spec store; wired into `run_scan` (records) and
+  `swarm.daily` (auto-marks outcomes; report key `rejections_marked`).
+  CLI: `python -m swarm.rejections list | mark | backfill` — the
+  transcript backfill reconstructed 38 records across 9 scan dates,
+  27 with outcomes.
 - `swarm/crew.py` — `run_scan(day)`: stage A (regime → scout, one crew), stage B
   per-candidate (dossier → skeptic, capped by `MAX_CANDIDATES=8`), stage C chair
   → JSON specs. Persists every stage transcript to `reports/raw/<date>_<stage>.txt`,
@@ -98,7 +111,11 @@ Phase 7 fill semantics).
   evaluate → simulate_archetype` so the backtest simulates the exact
   fillable structure; `run_gate` adds a `risk_budget` block (cap, width
   rule, legacy-geometry budget at latest close) when a budget is given.
-  `max_risk_usd=None` keeps the legacy geometry.
+  `max_risk_usd=None` keeps the legacy geometry. **Phase 8:** the close
+  cache refreshes when its newest bar is more than one calendar day old
+  (`_should_refresh`) — the MU cache written 2026-11-07 had silently
+  frozen fills and marks at the 11-06 close; the three corrupt MU fills
+  were re-executed at the true 11-25 close after the fix.
 - `swarm/prompts/` — `chair.md`, `regime_analyst.md`, `flow_scout.md`,
   `dossier_analyst.md`, `skeptic.md` loaded via `prompts.load(name)`
   (`resources.files("swarm.prompts")`).
@@ -109,6 +126,7 @@ Phase 7 fill semantics).
 |---|---|
 | `data/specs/trade_specs.json` | accumulated gated ideas, upserted by `trade_id` (`backtest_gate`: `approved` / `pending_backtest` / reject, plus `status`); scans never overwrite history |
 | `data/orders/*.json` | paper fill records |
+| `data/rejections/rejections.json` | every killed candidate: stage, score, reason, forward 7d outcome |
 | `data/pnl/summary.json` | tracker summary (learning-loop input) |
 | `data/backtests/cache/` | 5y close series per ticker |
 | `reports/raw/` | per-stage agent transcripts |

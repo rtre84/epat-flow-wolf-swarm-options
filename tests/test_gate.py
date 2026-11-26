@@ -7,6 +7,7 @@ from swarm.backtest.gate import (
     CloseSeries,
     _direction,
     _pick_strikes,
+    _should_refresh,
     bs_price,
     evaluate,
     metrics_for_direction,
@@ -122,6 +123,21 @@ class RiskBudgetStrikeTests(unittest.TestCase):
             rs = simulate_archetype(s, strat, 7, max_risk_usd=300.0)
             self.assertTrue(rs, strat)
             self.assertTrue(all(r >= -1.5 and math.isfinite(r) for r in rs), strat)
+
+
+class CacheRefreshTests(unittest.TestCase):
+    """Closes cached once must never freeze the paper book at a stale bar."""
+
+    def test_same_or_previous_day_is_fresh(self):
+        self.assertFalse(_should_refresh(date(2026, 11, 25), date(2026, 11, 25)))
+        self.assertFalse(_should_refresh(date(2026, 11, 25), date(2026, 11, 26)))  # Thanksgiving
+
+    def test_older_than_one_day_refreshes(self):
+        self.assertTrue(_should_refresh(date(2026, 11, 6), date(2026, 11, 26)))
+        self.assertTrue(_should_refresh(date(2026, 11, 21), date(2026, 11, 23)))  # weekend gap
+
+    def test_missing_or_empty_is_refresh(self):
+        self.assertTrue(_should_refresh(None))
 
 
 if __name__ == "__main__":

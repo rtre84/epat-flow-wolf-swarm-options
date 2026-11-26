@@ -48,6 +48,7 @@ swarm/
   llm.py             # OpenAI-compatible client (SWARM_MODEL)
   models.py          # TradeSpec, SpecStatus pydantic models
   specstore.py       # accumulating spec store (upsert by trade_id)
+  rejections.py      # rejection log: killed candidates + forward outcomes
   crew.py            # run_scan(): 3-stage CrewAI orchestration + scan CLI
   daily.py           # one-command day: run_scan → fill approved → mark book
   learn.py           # chair_calibration(): P&L facts → chair prompt directive
@@ -103,6 +104,11 @@ cp .env.example .env              # then fill in:
 # Mark the book daily: closes stopped/expired positions, writes summary
 ./.venv/bin/python -m swarm.paper mark
 
+# Rejection log: every killed candidate, tracked with forward 7d outcomes
+./.venv/bin/python -m swarm.rejections list      # view the log
+./.venv/bin/python -m swarm.rejections mark      # fill pending outcomes (UW closes)
+./.venv/bin/python -m swarm.rejections backfill  # rebuild from scan transcripts
+
 # Run tests
 ./.venv/bin/python -m unittest discover -s tests -v
 ```
@@ -144,6 +150,7 @@ cp .env.example .env              # then fill in:
 | Path | Contents |
 |---|---|
 | `data/specs/trade_specs.json` | accumulated ideas + gate verdicts (upserted by trade_id; approved records are never replaced) |
+| `data/rejections/rejections.json` | killed candidates: stage, score, reason, forward 7d outcome |
 | `data/orders/` | paper fill records |
 | `data/pnl/summary.json` | realized P&L, win rate, mean R |
 | `data/backtests/cache/` | 5y close series per ticker |

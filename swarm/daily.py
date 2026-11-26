@@ -14,7 +14,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from swarm import crew
+from swarm import crew, rejections
 from swarm.execute.paper import ORDERS_DIR
 from swarm.execute.tracker import mark_all
 from swarm.paper import fill_approved
@@ -69,6 +69,11 @@ def run_day(day: date | None = None) -> dict:
     if _has_open_orders():
         marked = mark_all(_uw())
 
+    # track rejected ideas the same way: fill forward outcomes where history allows
+    rejections_marked = 0
+    if rejections.has_pending_outcomes():
+        rejections_marked = rejections.update_outcomes(_uw())
+
     return {
         "date": day.isoformat(),
         "weekend": weekend,
@@ -76,6 +81,7 @@ def run_day(day: date | None = None) -> dict:
         "total_specs": len(specs),
         "filled": filled,
         "fill_errors": skip_errors,
+        "rejections_marked": rejections_marked,
         "book": None if marked is None else {k: marked.get(k) for k in
                                              ("open", "closed", "realized_pnl_usd",
                                               "win_rate", "mean_r")},

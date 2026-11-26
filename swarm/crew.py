@@ -19,7 +19,7 @@ from typing import Callable
 from crewai import Agent, Crew, Process, Task
 
 from swarm.llm import LLMConfig
-from swarm import prompts, specstore
+from swarm import prompts, specstore, rejections
 from swarm.learn import chair_calibration
 from swarm.tools.uw_tools import UW_TOOLS
 
@@ -138,6 +138,7 @@ def run_scan(day: date | None = None) -> dict:
 
     candidates = _extract_candidates(scout_text)
     dossiers_and_skeptics = []
+    packages: list[tuple[str, str, str]] = []  # (ticker, dossier_text, skeptic_text) for the rejection log
     for rank, ticker in enumerate(candidates, 1):
         dossier_agent = _agent("dossier_analyst")
         d_task = Task(
@@ -160,6 +161,7 @@ def run_scan(day: date | None = None) -> dict:
         for stage, text in [(f"dossier_{rank}_{ticker}", d_text), (f"skeptic_{rank}_{ticker}", s_text)]:
             (RAW_DIR / f"{day.isoformat()}_{stage}.txt").write_text(text)
         dossiers_and_skeptics.append(f"### Candidate {rank}: {ticker}\nDOSSIER:\n{d_text}\nSKEPTIC:\n{s_text}\n")
+        packages.append((ticker, d_text, s_text))
 
     # Stage C: chair (learning loop may raise the chair's confidence bar)
     calibration = chair_calibration()
@@ -182,6 +184,10 @@ def run_scan(day: date | None = None) -> dict:
     (RAW_DIR / f"{day.isoformat()}_chair.txt").write_text(chair_text)
 
     specs, empty_day = _extract_specs(chair_text)
+    # rejection log: every scanned candidate that never became a spec
+    rejections.record_rejections(
+        day, packages,
+        {sp.get("underlying") for sp in specs if isinstance(sp, dict)})
     if not specs and not empty_day:
         RAW_DIR.parent.mkdir(parents=True, exist_ok=True)
         (RAW_DIR / f"{day.isoformat()}_parse_warning.txt").write_text(

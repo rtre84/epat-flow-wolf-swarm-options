@@ -51,6 +51,16 @@ def bs_price(spot: float, strike: float, t_years: float, iv: float, is_call: boo
     return strike * _norm_cdf(-d2) - spot * _norm_cdf(-d1)
 
 
+def _should_refresh(last_date: date | None, today: date | None = None) -> bool:
+    """Cached closes are refreshed when the newest bar is more than one
+    calendar day old — tolerates weekends/holidays, but never lets the gate,
+    fills, or marks run on a stale close (the MU cache written 2026-11-07
+    silently froze the paper book at the 11-06 close until this check)."""
+    if last_date is None:
+        return True
+    return (today or date.today()) - last_date > timedelta(days=1)
+
+
 @dataclass
 class CloseSeries:
     dates: list[date]
@@ -59,9 +69,16 @@ class CloseSeries:
     @classmethod
     def from_uw(cls, uw: UWMCPClient, ticker: str) -> "CloseSeries":
         cache = CACHE_DIR / f"{ticker}_close_5y.json"
+        payload: list | None = None
         if cache.exists():
-            payload = json.loads(cache.read_text())
-        else:
+            try:
+                payload = json.loads(cache.read_text())
+                last = max(r["date"] for r in payload) if payload else None
+                if _should_refresh(date.fromisoformat(last) if last else None):
+                    payload = None  # stale: re-pull and overwrite
+            except (json.JSONDecodeError, KeyError, ValueError):
+                payload = None  # corrupt cache: re-pull
+        if payload is None:
             r = uw.call_tool("get_ticker_close_prices", {"ticker": ticker, "timeframe": "5Y"})
             payload = json.loads(r["result"]["content"][0]["text"]).get("data", [])
             cache.write_text(json.dumps(payload))

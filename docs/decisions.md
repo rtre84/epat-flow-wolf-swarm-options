@@ -33,6 +33,22 @@ re-derive behavior.
    `status: executed` records are approved and therefore protected too).
    Pending/rejected records remain replaceable by re-scans — only approval
    locks the record. Blocked records are reported on stderr by `save_merged`.
+6. **Killed ideas are logged and tracked, not discarded.** (Mentor
+   feedback: "log the rejected ideas and track them the same way;
+   otherwise we can't say the skips were right.") `swarm/rejections.py`
+   records every scanned candidate that never became a spec — first fatal
+   stage (`dossier_floor` / `skeptic_kill` / `chair`), dossier score and
+   verdict, one-line reason — parsed from the mandated stage-B blocks, so
+   the log adds no LLM or UW cost. `update_outcomes` marks each record
+   with the forward 7-trading-day return from the same historical close
+   series the gate uses (point-in-time by construction; pending until the
+   bars exist). The log accumulates upsert-by-`rejection_id` and is
+   auto-marked by `swarm.daily`.
+7. **Close caches never go stale.** A cached 5y close series refreshes
+   whenever its newest bar is more than one calendar day old
+   (`gate._should_refresh`). Incident: the MU cache written 2026-11-07
+   froze three paper fills at the 2026-11-06 close until this rule; the
+   fills were re-executed at the true latest close.
    Scout candidate volume is prompt-native (AT MOST 8 in `flow_scout.md`,
    mirrored by `MAX_CANDIDATES=8`); the funnel is deliberately wide —
    `min_premium=100000`, a non-sweep ask-side block pass, and up to 8
