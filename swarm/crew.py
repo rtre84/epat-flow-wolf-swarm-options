@@ -27,8 +27,13 @@ RAW_DIR = Path(__file__).resolve().parent.parent / "reports" / "raw"
 SPEC_FILE = specstore.SPEC_FILE  # re-export: daily.py reads crew.SPEC_FILE
 MAX_CANDIDATES = 8
 
-TOOL_HINT = "\n\nUnusual Whales tools available: " + ", ".join(
-    t.name for t in UW_TOOLS)
+TOOL_HINT = ("\n\nUnusual Whales tools available: " + ", ".join(
+    t.name for t in UW_TOOLS) +
+    "\nPoint-in-time discipline: pass the scan date to every dated tool "
+    "(date / date_param / newer_than / older_than / min_date) so every call "
+    "returns data as of that day, never today's snapshot. get_market_state, "
+    "get_options_chain, and get_insider_activity_by_ticker are CURRENT-ONLY "
+    "(no historical mode) — treat their output accordingly.")
 
 
 def _agent(role: str) -> Agent:

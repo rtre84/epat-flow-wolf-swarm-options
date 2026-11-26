@@ -49,6 +49,14 @@ re-derive behavior.
    (`gate._should_refresh`). Incident: the MU cache written 2026-11-07
    froze three paper fills at the 2026-11-06 close until this rule; the
    fills were re-executed at the true latest close.
+8. **Point-in-time discipline (mentor: no look-ahead bias).** Dated UW
+   endpoints accept the scan date (`uw_tools` Phase 9); every agent task
+   carries the as-of instruction (`crew.TOOL_HINT`);
+   `get_market_state`, `get_options_chain`, and
+   `get_insider_activity_by_ticker` are current-only and declared in
+   `docs/pit_audit.md`. Locked policy there: performance claims come only
+   from live-date scans; the 2026-11-02→07 backfill runs are marked
+   look-ahead-biased and excluded from claims.
    Scout candidate volume is prompt-native (AT MOST 8 in `flow_scout.md`,
    mirrored by `MAX_CANDIDATES=8`); the funnel is deliberately wide —
    `min_premium=100000`, a non-sweep ask-side block pass, and up to 8

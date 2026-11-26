@@ -18,11 +18,13 @@ how it behaves. Any refactor must update it in the same change._
 | 6.3 | Approved-spec immutability in the spec store | `21b2f58` | done |
 | 7 | Risk-budget strikes (mentor feedback): width capped to `max_risk_usd`, width-scaled net floor, budget sensitivity in gate reports | `44a4765` | done |
 | 8 | Rejection log (mentor: track the skips) + close-cache refresh fix (stale-cache fill bug) | `711f5dd` | done |
+| 9 | Point-in-time fixes (mentor: no look-ahead bias): date params exposed on all dated UW wrappers, scan-date discipline in every task, `docs/pit_audit.md` + locked policy | (this change) | done |
 
-Test suite: `./.venv/bin/python -m unittest discover -s tests` — **63 tests, all green**
+Test suite: `./.venv/bin/python -m unittest discover -s tests` — **73 tests, all green**
 (21 pre-existing + 20 in `tests/test_specstore.py` + 15 in
-`tests/test_gate.py` Phase 7/8 tests + 11 in `tests/test_rejections.py`,
-with `test_paper.py` updated to the Phase 7 fill semantics).
+`tests/test_gate.py` Phase 7/8 tests + 11 in `tests/test_rejections.py` +
+10 in `tests/test_uw_tools.py`, with `test_paper.py` updated to the
+Phase 7 fill semantics).
 
 ## Module map (as of Phase 6)
 
@@ -119,6 +121,18 @@ with `test_paper.py` updated to the Phase 7 fill semantics).
 - `swarm/prompts/` — `chair.md`, `regime_analyst.md`, `flow_scout.md`,
   `dossier_analyst.md`, `skeptic.md` loaded via `prompts.load(name)`
   (`resources.files("swarm.prompts")`).
+- `swarm/tools/uw.py` — minimal streamable-HTTP MCP client (no SDK).
+- `swarm/tools/uw_tools.py` — typed CrewAI tools over UW endpoints
+  (rate-disciplined, one lazily-initialized shared client — import spawns
+  no MCP session since Phase 9). **Phase 9 (point-in-time):** all dated
+  endpoints accept the scan date (`date_param` / `newer_than` /
+  `older_than` / `min_date`); `get_upcoming_earnings` windows from
+  `min_date`, not the wall clock; `get_market_state`,
+  `get_options_chain`, and `get_insider_activity_by_ticker` are
+  current-only (no historical mode in the UW API — see
+  `docs/pit_audit.md`). Argument forwarding is unit-tested
+  (`tests/test_uw_tools.py`), and `crew.TOOL_HINT` carries the
+  scan-date discipline to every agent task.
 
 ## Data artifacts
 
