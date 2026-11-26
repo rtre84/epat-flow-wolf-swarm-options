@@ -42,8 +42,20 @@ re-derive behavior.
 ## Gate (deterministic)
 
 - Approve above `n ≥ 30, win_rate ≥ 0.30, mean_R ≥ 0.05`; hard-reject
-  `net ≤ 1.0 pt` or `risk ≤ 0`. Thresholds chosen so a losing archetype can
+  `net ≤ max(0.25 pt, 10% of spread width)` (Phase 7 width-scaled floor;
+  replaces the flat 1.0-pt floor, which auto-rejected every budget-capped
+  narrow spread) or `risk ≤ 0`. Thresholds chosen so a losing archetype can
   never clear the probabilistic gate.
+- **Phase 7 — risk-budget strikes.** Spread width is
+  `min(geometric 5%/4% of spot, floor(max_risk_usd × 0.8 / 100))` points,
+  minimum 1 pt, threaded through gate and executor: the gate backtests the
+  exact structure the paper book can fill, ending the gate-approves /
+  executor-refuses mismatch (legacy fixed-% geometry broke the $300 cap for
+  any underlying above ~$60). `run_gate` records a `risk_budget` block with
+  the width-only budget the legacy geometry would have required at the
+  latest close (the mentor's "increase the budget and check" sensitivity).
+  Long (single-leg) strategies are unchanged: their premium risk is capped
+  by the executor's `max_risk_usd` check.
 - Entry IV ≈ 1.15× trailing 20-day realized vol (UW Basic tier has no IV
   endpoints); documented as a v2 upgrade, not a bug.
 

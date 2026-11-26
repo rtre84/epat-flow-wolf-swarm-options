@@ -74,9 +74,11 @@ class PaperTests(unittest.TestCase):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def test_fill_and_degenerate_rejection(self):
-        # the synthetic series marks these directions above the net floor
+        # Phase 7: with a $300 budget, every strategy — including narrow
+        # credit spreads — fills with single-contract risk inside the cap.
         ok = [Strategy.LONG_CALL, Strategy.LONG_PUT,
-              Strategy.BULL_CALL_SPREAD, Strategy.BEAR_PUT_SPREAD]
+              Strategy.BULL_CALL_SPREAD, Strategy.BEAR_PUT_SPREAD,
+              Strategy.BULL_PUT_SPREAD, Strategy.BEAR_CALL_SPREAD]
         for strat in ok:
             spec = make_spec(strat)
             rec = json.loads(execute_paper(spec, fake_uw()).model_dump_json())
@@ -91,11 +93,13 @@ class PaperTests(unittest.TestCase):
             # net_usd stored positive for both credit and debit books
             self.assertGreater(rec["net_usd"], 0)
             self.assertTrue((paper_mod.ORDERS_DIR / f"{spec.trade_id}.json").exists())
-        # narrow credit spreads under the 1.0-pt net floor are rejected,
-        # exactly as the backtest gate does
-        for strat in (Strategy.BULL_PUT_SPREAD, Strategy.BEAR_CALL_SPREAD):
+
+    def test_rejects_cap_too_small_for_any_structure(self):
+        # a cap below the cheapest budget-capped structure must be rejected,
+        # never oversized (risk_usd_one > cap raises before any fill)
+        for strat in (Strategy.LONG_CALL, Strategy.BULL_PUT_SPREAD):
             with self.assertRaises(ValueError):
-                execute_paper(make_spec(strat), fake_uw())
+                execute_paper(make_spec(strat, risk=50.0), fake_uw())
 
     def test_rejects_unapproved(self):
         spec = make_spec(Strategy.LONG_CALL)

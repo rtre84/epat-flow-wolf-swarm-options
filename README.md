@@ -110,12 +110,17 @@ cp .env.example .env              # then fill in:
 ## Gate math (v1)
 
 - Entry IV ≈ 1.15 × trailing 20-day realized vol (`realized_vol_20`)
-- Price legs vectorized Black–Scholes; strikes from spot geometry
-  (e.g. bull put spread: short 0.96×spot, long 0.91×spot)
+- Price legs vectorized Black–Scholes; strikes from spot geometry with
+  **risk-budget width** (Phase 7): spread width =
+  `min(5%/4% of spot, floor(max_risk_usd × 0.8 / 100))` pts, minimum 1 pt
+  (e.g. $300 cap → ≤2-pt spreads at any spot price; short strike keeps the
+  0.96/1.04×spot offset). The gate backtests the exact structure the
+  executor can fill, and its report logs the budget the legacy fixed-%
+  geometry would have needed.
 - Simulate every eligible historical entry (5-day stepping), fixed stops
   (2× premium for credits, near-zero for debits), hold to expiry otherwise
 - Approve only above `n ≥ 30`, `win_rate ≥ 0.30`, `mean_R ≥ 0.05`;
-  hard-reject `net ≤ 1.0 pt` or `risk ≤ 0`
+  hard-reject `net ≤ max(0.25 pt, 10% of width)` or `risk ≤ 0`
 
 ## Limitations (honest)
 

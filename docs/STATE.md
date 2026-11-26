@@ -16,9 +16,12 @@ how it behaves. Any refactor must update it in the same change._
 | 6.1 | Funnel widening: 8 candidates, $100k premium floor, non-sweep block pass | `576a41c` | done |
 | 6.2 | Kickoff retry on empty LLM responses; scout `expected_output` cap fix | `a82407f` | done |
 | 6.3 | Approved-spec immutability in the spec store | `21b2f58` | done |
+| 7 | Risk-budget strikes (mentor feedback): width capped to `max_risk_usd`, width-scaled net floor, budget sensitivity in gate reports | (this change) | code + tests green |
 
-Test suite: `./.venv/bin/python -m unittest discover -s tests` — **41 tests, all green**
-(21 pre-existing + 20 in `tests/test_specstore.py`).
+Test suite: `./.venv/bin/python -m unittest discover -s tests` — **49 tests, all green**
+(21 pre-existing + 20 in `tests/test_specstore.py` + 8 in
+`tests/test_gate.py` Phase 7 tests, with `test_paper.py` updated to the
+Phase 7 fill semantics).
 
 ## Module map (as of Phase 6)
 
@@ -73,17 +76,29 @@ Test suite: `./.venv/bin/python -m unittest discover -s tests` — **41 tests, a
   `data/pnl/summary.json` (`SUMMARY_PATH`, cwd-relative). Pure/deterministic,
   no LLM. Rules in `docs/decisions.md`.
 - `swarm/execute/paper.py` — `execute_paper`, `MULTIPLIER=100`,
-  `MIN_CONTRACT_RISK_USD=25`, writes `data/orders/*.json`.
+  `MIN_CONTRACT_RISK_USD=25`, writes `data/orders/*.json`. **Phase 7:**
+  strikes come from `_pick_strikes(..., spec.max_risk_usd)` — identical
+  budget-capped geometry as the gate's simulation — and the degenerate-net
+  floor is the gate's width-scaled default (no local override), so a
+  gate-approved structure always funds inside the spec's cap.
 - `swarm/execute/tracker.py` — `mark_all(uw)` re-marks open records using the
   gate's close logic, closes on stop/expiry, writes `data/pnl/summary.json`
   with keys `tracked, open, closed, realized_pnl_usd, open_committed_risk_usd,
   win_rate, mean_r, records` (`win_rate`/`mean_r` are `None` until ≥ 1 closed).
 - `swarm/execute/ib_adapter.py` — IB paper bridge, **disabled** until ≥ 30
   closed trades.
-- `swarm/backtest/gate.py` — `gate_spec` (line ~288): approve only above
-  `n ≥ 30, win_rate ≥ 0.30, mean_R ≥ 0.05`; hard-reject `net ≤ 1.0 pt` or
-  `risk ≤ 0`. Entry IV ≈ 1.15× trailing 20-day realized vol; fixed stops
-  (2× premium credits, near-zero debits), otherwise hold to expiry.
+- `swarm/backtest/gate.py` — `gate_spec`: approve only above
+  `n ≥ 30, win_rate ≥ 0.30, mean_R ≥ 0.05`; hard-reject
+  `net ≤ max(0.25 pt, 10% of width)` or `risk ≤ 0`. Entry IV ≈ 1.15×
+  trailing 20-day realized vol; fixed stops (2× premium credits,
+  near-zero debits), otherwise hold to expiry. **Phase 7:** strikes are
+  risk-budget-aware — `_pick_strikes(spot, direction, dte, max_risk_usd)`
+  sizes width `min(geometric, floor(cap×0.8/100))` pts, min 1 pt;
+  `gate_spec` threads the spec's `max_risk_usd` through `run_gate →
+  evaluate → simulate_archetype` so the backtest simulates the exact
+  fillable structure; `run_gate` adds a `risk_budget` block (cap, width
+  rule, legacy-geometry budget at latest close) when a budget is given.
+  `max_risk_usd=None` keeps the legacy geometry.
 - `swarm/prompts/` — `chair.md`, `regime_analyst.md`, `flow_scout.md`,
   `dossier_analyst.md`, `skeptic.md` loaded via `prompts.load(name)`
   (`resources.files("swarm.prompts")`).

@@ -88,11 +88,12 @@ def execute_paper(spec: TradeSpec, uw, dte: int = 7) -> OrderRecord:
 
     direction = _direction(spec.strategy.value)
     is_call = direction not in ("put_credit", "put_debit")
-    short_k, long_k = _pick_strikes(spot, direction, dte)
+    # Phase 7: strikes sized inside the spec's risk budget — identical to the
+    # gate's simulated structure, and the same width-scaled net floor.
+    short_k, long_k = _pick_strikes(spot, direction, dte, spec.max_risk_usd)
     t0 = dte / 252
     net_pts, risk_pts = metrics_for_direction(
         spot, short_k, long_k, t0, iv, is_call, direction,
-        min_net=max(1.0, 0.002 * spot),  # identical degenerate filter as the gate
     )
     short_fill, long_fill = bs_legs(spot, short_k, long_k, t0, iv, is_call)
     net_usd, risk_usd_one = net_pts * MULTIPLIER, risk_pts * MULTIPLIER

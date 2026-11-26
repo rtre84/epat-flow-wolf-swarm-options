@@ -28,6 +28,7 @@ CACHE_DIR.mkdir(parents=True, exist_ok=True)
 DAYS_PER_YEAR = 252
 IV_BLOAT = 1.15
 ENTRY_STEP_DAYS = 5
+RISK_WIDTH_BUFFER = 0.8  # fraction of max_risk_usd a single contract's width may consume
 STRATEGIES = (
     "long_call", "long_put",
     "bull_put_spread", "bear_call_spread",
@@ -76,16 +77,30 @@ class CloseSeries:
         return max(0.08, min(3.0, math.sqrt(var * DAYS_PER_YEAR)))
 
 
-def _pick_strikes(spot: float, direction: str, dte: int) -> tuple[float | None, float | None]:
-    """Archetype (short, long) strikes as % offsets from spot. Longs have short=None."""
+def _pick_strikes(spot: float, direction: str, dte: int,
+                  max_risk_usd: float | None = None) -> tuple[float | None, float | None]:
+    """(short, long) strikes for the archetype as % offsets from spot; longs
+    have short=None. With a risk budget (Phase 7), the spread width shrinks
+    so a single contract fits inside it: width = min(geometric,
+    floor(max_risk_usd * RISK_WIDTH_BUFFER / 100)) points, minimum 1 pt.
+    Gate and executor share this, so the gate backtests the exact structure
+    the paper book can actually fill. max_risk_usd=None keeps the legacy
+    geometric width."""
     if direction == "long":
         return None, spot * 1.00  # ATM-ish long option
-    return {
-        "put_credit": (spot * 0.96, spot * 0.91),   # sell lower put, buy lower put
-        "call_credit": (spot * 1.04, spot * 1.09),  # sell near call, buy far call
-        "call_debit": (spot * 1.04, spot * 1.00),   # buy near call, sell far call
-        "put_debit": (spot * 0.96, spot * 1.00),    # buy near put, sell lower put
-    }[direction]  # direction "long" returns early above
+    short_off, long_off, width_frac = {
+        "put_credit": (0.96, 0.91, 0.05),   # sell lower put, buy lower put
+        "call_credit": (1.04, 1.09, 0.05),  # sell near call, buy far call
+        "call_debit": (1.04, 1.00, 0.04),   # buy near call, sell far call
+        "put_debit": (0.96, 1.00, 0.04),    # buy near put, sell lower put
+    }[direction]
+    short_k = spot * short_off
+    width = spot * width_frac
+    if max_risk_usd is not None:
+        budget_width = max(1.0, math.floor(max_risk_usd * RISK_WIDTH_BUFFER / 100))
+        width = min(width, budget_width)
+    sign = 1.0 if long_off > short_off else -1.0
+    return short_k, short_k + sign * width
 
 
 def _direction(strategy: str) -> str:
@@ -121,9 +136,15 @@ def metrics_for_direction(
     iv: float,
     is_call: bool,
     direction: str,
-    min_net: float = 1.0,
+    min_net: float | None = None,
 ) -> tuple[float, float]:
-    """(net, risk) in premium points for the given archetype direction."""
+    """(net, risk) in premium points for the given archetype direction.
+
+    min_net defaults to a width-scaled premium floor (Phase 7):
+    max(0.25 pt, 10% of spread width) for spreads — the flat legacy 1.0-pt
+    floor would auto-reject every budget-capped narrow spread as
+    degenerate — and 1.0 pt for single legs. Pass min_net explicitly to
+    override."""
     if short_k is None and long_k is None:
         raise ValueError("no legs")
     leg_short, leg_long = bs_legs(spot, short_k, long_k, t0, iv, is_call)
@@ -131,6 +152,11 @@ def metrics_for_direction(
         net = leg_short - leg_long
     else:
         net = leg_long - leg_short
+    if min_net is None:
+        if short_k is not None and long_k is not None:
+            min_net = max(0.25, 0.10 * abs(short_k - long_k))
+        else:
+            min_net = 1.0
     if net <= min_net:
         raise ValueError(f"degenerate structure net={net:.4f} <= floor {min_net:.4f}")
     if direction.endswith("credit"):
@@ -215,15 +241,18 @@ def position_outcome(
     }
 
 
-def simulate_archetype(series: CloseSeries, strategy: str, dte: int) -> list[float]:
-    """Enter archetype every ENTRY_STEP_DAYS; returns list of R-multiples (pnl/risk)."""
+def simulate_archetype(series: CloseSeries, strategy: str, dte: int,
+                       max_risk_usd: float | None = None) -> list[float]:
+    """Enter archetype every ENTRY_STEP_DAYS; returns list of R-multiples (pnl/risk).
+    With max_risk_usd, every historical entry uses budget-capped strikes —
+    the exact structure the paper executor would fill for this spec."""
     direction = _direction(strategy)
     is_call = direction not in ("put_credit", "put_debit")
     results: list[float] = []
     for i in range(20, len(series.dates) - 1, ENTRY_STEP_DAYS):
         spot = series.closes[i]
         iv0 = series.realized_vol_20(i) * IV_BLOAT
-        short_k, long_k = _pick_strikes(spot, direction, dte)
+        short_k, long_k = _pick_strikes(spot, direction, dte, max_risk_usd)
         t0 = dte / DAYS_PER_YEAR
         try:
             net, risk = metrics_for_direction(spot, short_k, long_k, t0, iv0, is_call, direction)
@@ -241,8 +270,9 @@ def simulate_archetype(series: CloseSeries, strategy: str, dte: int) -> list[flo
     return results
 
 
-def evaluate(series: CloseSeries, strategy: str, dte: int) -> dict:
-    rs = simulate_archetype(series, strategy, dte)
+def evaluate(series: CloseSeries, strategy: str, dte: int,
+             max_risk_usd: float | None = None) -> dict:
+    rs = simulate_archetype(series, strategy, dte, max_risk_usd)
     if not rs:
         return {"dte": dte, "n": 0, "win_rate": 0.0, "mean_r": 0.0, "median_r": 0.0, "max_r": 0.0, "min_r": 0.0}
     rs.sort()
@@ -258,16 +288,20 @@ def evaluate(series: CloseSeries, strategy: str, dte: int) -> dict:
     }
 
 
-def run_gate(ticker: str, strategy: str, uws: UWMCPClient | None = None) -> dict:
+def run_gate(ticker: str, strategy: str, uws: UWMCPClient | None = None,
+             max_risk_usd: float | None = None) -> dict:
     """Full archetype gate: both 7d and 30d holds; pass requires one hold profile
-    to clear n>=30, win_rate>=0.30, mean_r>=0.05."""
+    to clear n>=30, win_rate>=0.30, mean_r>=0.05. With max_risk_usd, entries
+    are simulated with budget-capped strikes (Phase 7) and the report records
+    the budget the legacy geometry would have required (mentor's
+    'increase the budget and check' sensitivity)."""
     uw = uws or UWMCPClient()
     uw.initialize()
     series = CloseSeries.from_uw(uw, ticker)
     report = {"ticker": ticker, "strategy": strategy, "profiles": {}}
     best = None
     for dte in (7, 30):
-        m = evaluate(series, strategy, dte)
+        m = evaluate(series, strategy, dte, max_risk_usd)
         report["profiles"][f"{dte}d"] = m
         candidate = m["n"] >= 30 and m["win_rate"] >= 0.30 and m["mean_r"] >= 0.05
         report[f"{dte}d_pass"] = candidate
@@ -277,11 +311,22 @@ def run_gate(ticker: str, strategy: str, uws: UWMCPClient | None = None) -> dict
     months = 128  # ~6 months of bars
     recent = CloseSeries(series.dates[-months:], series.closes[-months:])
     for dte in (7, 30):
-        m = evaluate(recent, strategy, dte)
+        m = evaluate(recent, strategy, dte, max_risk_usd)
         report["profiles"][f"{dte}d_recent"] = m
         report[f"{dte}d_recent_pass"] = (
             m["n"] >= 8 and m["win_rate"] >= 0.25 and m["mean_r"] >= 0.0
         )
+    if max_risk_usd is not None:
+        latest = series.closes[-1]
+        direction = _direction(strategy)
+        width_frac = 0.05 if direction.endswith("credit") else 0.04
+        report["risk_budget"] = {
+            "cap_usd": max_risk_usd,
+            "width_rule": "min(geometric, floor(cap*0.8/100)) pts, min 1 pt",
+            "legacy_geometry_width_risk_usd": round(latest * width_frac * 100, 1),
+            "legacy_note": "width-only upper bound at the latest close; the "
+                           "budget the old fixed-% geometry would have required",
+        }
     return report
 
 
@@ -289,7 +334,8 @@ def gate_spec(spec: dict, uws: UWMCPClient | None = None) -> dict:
     """Backtest-gate one spec dict — writes report under data/backtests/."""
     out_dir = Path("data/backtests")
     out_dir.mkdir(parents=True, exist_ok=True)
-    report = run_gate(spec["underlying"], spec["strategy"], uws)
+    report = run_gate(spec["underlying"], spec["strategy"], uws,
+                      max_risk_usd=spec.get("max_risk_usd"))
     report["trade_id"] = spec["trade_id"]
     (out_dir / f"{spec['trade_id']}.json").write_text(json.dumps(report, indent=2))
     spec = dict(spec)

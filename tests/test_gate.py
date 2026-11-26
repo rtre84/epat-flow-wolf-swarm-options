@@ -9,6 +9,7 @@ from swarm.backtest.gate import (
     _pick_strikes,
     bs_price,
     evaluate,
+    metrics_for_direction,
     simulate_archetype,
 )
 
@@ -68,6 +69,59 @@ class GateTests(unittest.TestCase):
         m = evaluate(_series(), "bull_put_spread", 7)
         self.assertGreater(m["n"], 0)
         self.assertLessEqual(m["win_rate"], 1)
+
+
+class RiskBudgetStrikeTests(unittest.TestCase):
+    """Phase 7: budget-capped strike widths so a single contract fits the
+    spec's max_risk_usd; gate and executor share the same structure."""
+
+    def test_no_budget_keeps_legacy_geometry(self):
+        short, lng = _pick_strikes(738.0, "put_credit", 7)
+        self.assertAlmostEqual(short, 738.0 * 0.96)
+        self.assertAlmostEqual(lng, 738.0 * 0.91)
+
+    def test_budget_caps_width(self):
+        # $300 cap -> floor(300*0.8/100) = 2-pt spreads at any spot
+        short, lng = _pick_strikes(738.0, "put_credit", 7, 300.0)
+        self.assertAlmostEqual(short, 738.0 * 0.96)
+        self.assertAlmostEqual(lng, short - 2.0)
+        short, lng = _pick_strikes(738.0, "call_credit", 7, 250.0)
+        self.assertAlmostEqual(lng, short + 2.0)
+        short, lng = _pick_strikes(738.0, "call_debit", 7, 300.0)
+        self.assertAlmostEqual(lng, short - 2.0)
+        short, lng = _pick_strikes(738.0, "put_debit", 7, 300.0)
+        self.assertAlmostEqual(lng, short + 2.0)
+
+    def test_low_spot_keeps_geometric_width(self):
+        # spot 30: 5% width (1.5 pts) is already inside the budget
+        short, lng = _pick_strikes(30.0, "put_credit", 7, 300.0)
+        self.assertAlmostEqual(lng, short - 1.5)
+
+    def test_long_ignores_budget(self):
+        short, lng = _pick_strikes(738.0, "long", 7, 300.0)
+        self.assertIsNone(short)
+        self.assertAlmostEqual(lng, 738.0)
+
+    def test_net_floor_scales_with_width(self):
+        # width-scaled floor replaces the flat 1.0-pt floor: a 2-pt spread
+        # with a 0.5-pt credit is a valid structure, not degenerate
+        net, risk = metrics_for_direction(
+            100.0, 96.0, 94.0, 7 / 252, 0.60, False, "put_credit")
+        self.assertGreater(net, 0)
+        self.assertAlmostEqual(risk, 2.0 - net)
+
+    def test_degenerate_net_still_rejected(self):
+        # near-zero premium under the width-scaled floor must still raise
+        with self.assertRaises(ValueError):
+            metrics_for_direction(
+                100.0, 96.0, 94.0, 7 / 252, 0.08, False, "put_credit")
+
+    def test_budgeted_simulation_runs_all_strategies(self):
+        s = _series()
+        for strat in STRATS:
+            rs = simulate_archetype(s, strat, 7, max_risk_usd=300.0)
+            self.assertTrue(rs, strat)
+            self.assertTrue(all(r >= -1.5 and math.isfinite(r) for r in rs), strat)
 
 
 if __name__ == "__main__":
