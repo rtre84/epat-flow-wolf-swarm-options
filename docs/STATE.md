@@ -16,7 +16,7 @@ how it behaves. Any refactor must update it in the same change._
 | 6.1 | Funnel widening: 8 candidates, $100k premium floor, non-sweep block pass | `576a41c` | done |
 | 6.2 | Kickoff retry on empty LLM responses; scout `expected_output` cap fix | `a82407f` | done |
 | 6.3 | Approved-spec immutability in the spec store | `21b2f58` | done |
-| 7 | Risk-budget strikes (mentor feedback): width capped to `max_risk_usd`, width-scaled net floor, budget sensitivity in gate reports | (this change) | code + tests green |
+| 7 | Risk-budget strikes (mentor feedback): width capped to `max_risk_usd`, width-scaled net floor, budget sensitivity in gate reports | `44a4765` | done |
 
 Test suite: `./.venv/bin/python -m unittest discover -s tests` — **49 tests, all green**
 (21 pre-existing + 20 in `tests/test_specstore.py` + 8 in
