@@ -17,7 +17,7 @@ how it behaves. Any refactor must update it in the same change._
 | 6.2 | Kickoff retry on empty LLM responses; scout `expected_output` cap fix | `a82407f` | done |
 | 6.3 | Approved-spec immutability in the spec store | `21b2f58` | done |
 | 7 | Risk-budget strikes (mentor feedback): width capped to `max_risk_usd`, width-scaled net floor, budget sensitivity in gate reports | `44a4765` | done |
-| 8 | Rejection log (mentor: track the skips) + close-cache refresh fix (stale-cache fill bug) | (this change) | done |
+| 8 | Rejection log (mentor: track the skips) + close-cache refresh fix (stale-cache fill bug) | `711f5dd` | done |
 
 Test suite: `./.venv/bin/python -m unittest discover -s tests` — **63 tests, all green**
 (21 pre-existing + 20 in `tests/test_specstore.py` + 15 in
