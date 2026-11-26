@@ -1,0 +1,566 @@
+[
+  {
+    "rejection_id": "2026-10-23_CRWV",
+    "date": "2026-10-23",
+    "ticker": "CRWV",
+    "rank": 1,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "keep",
+    "killed_by": "dossier_floor",
+    "reason": "The flagged call sweeps (e.g., $17.05M 3/19/27 $85C on 10/21 at underlying 61.64) were NOT accompanied by evidenced dark-pool accumulation \u2014 prints show no side \u2014 and the insider leg is data-empty, so the two primary con",
+    "outcome": {
+      "spot_at_rejection": 54.23,
+      "spot_7_trading_days_later": 53.74,
+      "fwd_return_7d": -0.0091
+    }
+  },
+  {
+    "rejection_id": "2026-10-23_TSLA",
+    "date": "2026-10-23",
+    "ticker": "TSLA",
+    "rank": 2,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 3.0,
+    "skeptic_action": "keep",
+    "killed_by": "dossier_floor",
+    "reason": "The flagged green-sweep bullish thesis fails confluence: dark-pool prints are small and two-way with no accumulation confirming the sweeps, and the insider tool returned no net activity data (UNKNOWN, docked). GEX struct",
+    "outcome": {
+      "spot_at_rejection": 372.22,
+      "spot_7_trading_days_later": 398.5,
+      "fwd_return_7d": 0.0706
+    }
+  },
+  {
+    "rejection_id": "2026-10-23_QQQ",
+    "date": "2026-10-23",
+    "ticker": "QQQ",
+    "rank": 3,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "Dark-pool prints lean buy-side at ask (+2), but they are modest in size, extended-hours, and contradicted by the day's put-led premium tape ($17.04B put vs $16.46B call, P/C 0.855) and two-sided sweep flow, so the flagge",
+    "outcome": {
+      "spot_at_rejection": 704.4,
+      "spot_7_trading_days_later": 685.28,
+      "fwd_return_7d": -0.0271
+    }
+  },
+  {
+    "rejection_id": "2026-11-02_MU",
+    "date": "2026-11-02",
+    "ticker": "MU",
+    "rank": 1,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 4.0,
+    "skeptic_action": "downgrade",
+    "killed_by": "dossier_floor",
+    "reason": "The flagged green sweeps are real and large (MU 2027-01-15 600C sweeps, $14.4M/$12.6M, >90% ask-side) and dark-pool prints on 11-07 were consistently buy-side at ask \u2014 earning the +2 with a haircut to +1 for thin size (~",
+    "outcome": {
+      "spot_at_rejection": 833.59,
+      "spot_7_trading_days_later": 811.3,
+      "fwd_return_7d": -0.0267
+    }
+  },
+  {
+    "rejection_id": "2026-11-02_QQQ",
+    "date": "2026-11-02",
+    "ticker": "QQQ",
+    "rank": 2,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 3.0,
+    "skeptic_action": "keep",
+    "killed_by": "dossier_floor",
+    "reason": "The bullish sweep flow is unconfirmed \u2014 dark-pool prints are trivially small and mixed (~$2.7M total, no accumulation), and the insider check is structurally N-A for an ETF (+0 confluence). Dealer positioning cuts agains",
+    "outcome": {
+      "spot_at_rejection": 681.09,
+      "spot_7_trading_days_later": 690.38,
+      "fwd_return_7d": 0.0136
+    }
+  },
+  {
+    "rejection_id": "2026-11-02_NVDA",
+    "date": "2026-11-02",
+    "ticker": "NVDA",
+    "rank": 3,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The flagged sweep flow was NOT accompanied by meaningful dark-pool accumulation \u2014 prints were buy-side-leaning but retail-sized (~$3\u20134M aggregate vs 116M avg daily volume), so the +2 confluence adder is not earned. Insid",
+    "outcome": {
+      "spot_at_rejection": 202.06,
+      "spot_7_trading_days_later": 173.73,
+      "fwd_return_7d": -0.1402
+    }
+  },
+  {
+    "rejection_id": "2026-11-02_AVGO",
+    "date": "2026-11-02",
+    "ticker": "AVGO",
+    "rank": 4,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 3.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The flagged green sweeps cannot be validated: dark-pool prints are active but carry no side tags, so the +2 flow-confirmation is unavailable, and the insider tool returned no net activity figures (UNKNOWN, docked). GEX/m",
+    "outcome": {
+      "spot_at_rejection": 322.23,
+      "spot_7_trading_days_later": 345.22,
+      "fwd_return_7d": 0.0713
+    }
+  },
+  {
+    "rejection_id": "2026-11-03_QQQ",
+    "date": "2026-11-03",
+    "ticker": "QQQ",
+    "rank": 2,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 3.0,
+    "skeptic_action": "keep",
+    "killed_by": "dossier_floor",
+    "reason": "The scout's call-dominated sweeps are only weakly corroborated \u2014 dark-pool prints show a buy-side tilt at the ask but are small extended-hours lots (~$3.3M/20 prints), not conviction accumulation (+1 partial). Near-dated",
+    "outcome": {
+      "spot_at_rejection": 685.28,
+      "spot_7_trading_days_later": 688.17,
+      "fwd_return_7d": 0.0042
+    }
+  },
+  {
+    "rejection_id": "2026-11-03_SPX",
+    "date": "2026-11-03",
+    "ticker": "SPX",
+    "rank": 3,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The call-sweep thesis fails confluence: dark-pool prints are empty (index \u2014 no off-exchange confirmation possible) and insider activity is empty, earning 0 of the +3 flow/insider credit. GEX structure is at odds with the",
+    "outcome": null
+  },
+  {
+    "rejection_id": "2026-11-03_NVDA",
+    "date": "2026-11-03",
+    "ticker": "NVDA",
+    "rank": 4,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The earnings tool confirms NVDA reports 2026-11-17 postmarket with a ~13.7% implied move \u2014 a confirmed binary event within 7 days that triggers the mandatory NO-TRADE rule regardless of other confluence. Dark-pool prints",
+    "outcome": {
+      "spot_at_rejection": 206.69,
+      "spot_7_trading_days_later": 166.19,
+      "fwd_return_7d": -0.1959
+    }
+  },
+  {
+    "rejection_id": "2026-11-03_TSLA",
+    "date": "2026-11-03",
+    "ticker": "TSLA",
+    "rank": 5,
+    "dossier_verdict": "BULLISH",
+    "dossier_score": 5.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The scout's high-premium call sweeps are corroborated by net buy-side dark-pool prints (~$2.3M across the 20 latest, all at the ask on a rising tape), earning the +2, and front-expiry max pain at 360 vs spot 358.22 adds ",
+    "outcome": {
+      "spot_at_rejection": 398.5,
+      "spot_7_trading_days_later": 397.45,
+      "fwd_return_7d": -0.0026
+    }
+  },
+  {
+    "rejection_id": "2026-11-03_TSM",
+    "date": "2026-11-03",
+    "ticker": "TSM",
+    "rank": 6,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 3.0,
+    "skeptic_action": "keep",
+    "killed_by": "dossier_floor",
+    "reason": "The flagged call sweeps were accompanied by genuine buy-side dark-pool prints (12+ at/above-ask prints, ~$100-357K each), earning the +2 confluence. However, dealer structure works against the upside idea: spot ~$405.27 ",
+    "outcome": {
+      "spot_at_rejection": 404.8,
+      "spot_7_trading_days_later": 405.49,
+      "fwd_return_7d": 0.0017
+    }
+  },
+  {
+    "rejection_id": "2026-11-04_MU",
+    "date": "2026-11-04",
+    "ticker": "MU",
+    "rank": 1,
+    "dossier_verdict": "BULLISH",
+    "dossier_score": 4.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The flagged call sweeps were accompanied by consistent buy-side dark-pool prints at ~$694.7, but at only ~$1.8M total across ~20 small prints it is confirmation of direction, not meaningful accumulation (+1, not +2). Nea",
+    "outcome": {
+      "spot_at_rejection": 795.23,
+      "spot_7_trading_days_later": 778.31,
+      "fwd_return_7d": -0.0213
+    }
+  },
+  {
+    "rejection_id": "2026-11-04_QQQ",
+    "date": "2026-11-04",
+    "ticker": "QQQ",
+    "rank": 2,
+    "dossier_verdict": "BULLISH",
+    "dossier_score": 4.0,
+    "skeptic_action": "downgrade",
+    "killed_by": "dossier_floor",
+    "reason": "Buy-side dark-pool prints ($105K\u2013$552K premiums, ~$2.7M visible, clustered 657.35\u2013657.65, mostly above NBBO bid) confirm the flagged sweeps were accompanied by accumulation (+2). Near-dated max pain levels (663/667/674) ",
+    "outcome": {
+      "spot_at_rejection": 691.95,
+      "spot_7_trading_days_later": 679.89,
+      "fwd_return_7d": -0.0174
+    }
+  },
+  {
+    "rejection_id": "2026-11-04_NVDA",
+    "date": "2026-11-04",
+    "ticker": "NVDA",
+    "rank": 3,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The flagged sweep flow failed confluence: dark-pool tape shows only sub-$400K retail-size extended-hours clips with zero block accumulation, and the insider tool returned no net activity data (UNKNOWN, docked). Dealer po",
+    "outcome": {
+      "spot_at_rejection": 200.13,
+      "spot_7_trading_days_later": 162.85,
+      "fwd_return_7d": -0.1863
+    }
+  },
+  {
+    "rejection_id": "2026-11-05_MU",
+    "date": "2026-11-05",
+    "ticker": "MU",
+    "rank": 1,
+    "dossier_verdict": "BULLISH",
+    "dossier_score": 5.0,
+    "skeptic_action": "downgrade",
+    "killed_by": "dossier_floor",
+    "reason": "The high-premium call sweeps are corroborated by buy-side dark-pool prints executing at the ask in extended hours (+2), and near-term max pain (735/750/720) sits above spot ~694.79, providing an upward magnet (+1). Insid",
+    "outcome": {
+      "spot_at_rejection": 656.39,
+      "spot_7_trading_days_later": 719.02,
+      "fwd_return_7d": 0.0954
+    }
+  },
+  {
+    "rejection_id": "2026-11-05_QQQ",
+    "date": "2026-11-05",
+    "ticker": "QQQ",
+    "rank": 2,
+    "dossier_verdict": "BULLISH",
+    "dossier_score": 5.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The scout's large call sweeps are corroborated by roughly $3M of extended-hours dark-pool prints concentrated at ask-side quotes ($657.35-657.65), supporting the +2 accumulation confluence. Near-term max pain levels (663",
+    "outcome": {
+      "spot_at_rejection": 647.05,
+      "spot_7_trading_days_later": 661.75,
+      "fwd_return_7d": 0.0227
+    }
+  },
+  {
+    "rejection_id": "2026-11-05_NVDA",
+    "date": "2026-11-05",
+    "ticker": "NVDA",
+    "rank": 3,
+    "dossier_verdict": null,
+    "dossier_score": null,
+    "skeptic_action": "kill",
+    "killed_by": "skeptic_kill",
+    "reason": "The dossier's headline sweeps fail the hedged-flow check \u2014 near-zero ask-side premium, non-opening flags, and low vol/OI mark them as rolls or unwinds into weakness, not conviction buying. NVDA reports 2026-11-17 with a ",
+    "outcome": {
+      "spot_at_rejection": 181.6,
+      "spot_7_trading_days_later": 156.14,
+      "fwd_return_7d": -0.1402
+    }
+  },
+  {
+    "rejection_id": "2026-11-06_NVDA",
+    "date": "2026-11-06",
+    "ticker": "NVDA",
+    "rank": 2,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 3.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "High-premium sweeps were corroborated by genuine buy-side dark-pool accumulation (+2), with spot above the 186 gamma flip and near-expiry max pain (192.5\u2013197.5) above the 186.64 close adding +1 for an upward carry/magnet",
+    "outcome": {
+      "spot_at_rejection": 186.64,
+      "spot_7_trading_days_later": 155.46,
+      "fwd_return_7d": -0.1671
+    }
+  },
+  {
+    "rejection_id": "2026-11-06_TSM",
+    "date": "2026-11-06",
+    "ticker": "TSM",
+    "rank": 3,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 3.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The flagged call-side flow is not confirmed as uniformly green \u2014 direct pull of TSM sweeps shows the largest print is an $8.69M Feb-2027 370P put sweep (11/06) plus additional put sweeps, against only smaller call sweeps",
+    "outcome": {
+      "spot_at_rejection": 375.44,
+      "spot_7_trading_days_later": 359.69,
+      "fwd_return_7d": -0.042
+    }
+  },
+  {
+    "rejection_id": "2026-11-06_AVGO",
+    "date": "2026-11-06",
+    "ticker": "AVGO",
+    "rank": 4,
+    "dossier_verdict": "BULLISH",
+    "dossier_score": 5.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The green sweeps were corroborated by unambiguous dark-pool accumulation (20/20 buy-side prints at ask into ~$294), and max pain ($315-$325 near-dated, $297.5 by 11/18) sits above spot with no binary event until 12/10, s",
+    "outcome": {
+      "spot_at_rejection": 293.69,
+      "spot_7_trading_days_later": 341.6,
+      "fwd_return_7d": 0.1631
+    }
+  },
+  {
+    "rejection_id": "2026-11-06_NVDA",
+    "date": "2026-11-06",
+    "ticker": "NVDA",
+    "rank": 5,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 1.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "Dark-pool prints failed to confirm the call-sweep thesis \u2014 recent blocks (~$793K, $745K largest) printed at/below the bid, a seller-initiated skew worth 0 of the +2 accumulation credit. Insider data came back as a name-o",
+    "outcome": {
+      "spot_at_rejection": 186.64,
+      "spot_7_trading_days_later": 155.46,
+      "fwd_return_7d": -0.1671
+    }
+  },
+  {
+    "rejection_id": "2026-11-06_SPY",
+    "date": "2026-11-06",
+    "ticker": "SPY",
+    "rank": 6,
+    "dossier_verdict": "BULLISH",
+    "dossier_score": 4.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "Call-skewed sweeps are accompanied by heavy institutional dark-pool prints (~$5.8M visible notional near 756), but prints carry no direction tag and are stamped post-scan-date, so I award only partial confluence credit (",
+    "outcome": {
+      "spot_at_rejection": 735.29,
+      "spot_7_trading_days_later": 732.44,
+      "fwd_return_7d": -0.0039
+    }
+  },
+  {
+    "rejection_id": "2026-11-09_MU",
+    "date": "2026-11-09",
+    "ticker": "MU",
+    "rank": 1,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The scout's green call sweeps are stale (Nov 4\u20136, on 600C/700C/900C Jan-2027\u20132029 strikes when MU traded 688\u2013707) and two-sided (830P Dec-18 and Nov-20 put sweeps also flagged), so fresh directional conviction is unconfi",
+    "outcome": {
+      "spot_at_rejection": 733.15,
+      "spot_7_trading_days_later": 705.27,
+      "fwd_return_7d": -0.038
+    }
+  },
+  {
+    "rejection_id": "2026-11-09_QQQ",
+    "date": "2026-11-09",
+    "ticker": "QQQ",
+    "rank": 2,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The bullish sweep thesis fails confluence on every rubric line: dark-pool prints were two-sided with the single largest block (~$59M, 86,848 sh @ $679.35) printing below the bid, i.e., distribution rather than the +2 acc",
+    "outcome": {
+      "spot_at_rejection": 679.35,
+      "spot_7_trading_days_later": 659.51,
+      "fwd_return_7d": -0.0292
+    }
+  },
+  {
+    "rejection_id": "2026-11-11_MU",
+    "date": "2026-11-11",
+    "ticker": "MU",
+    "rank": 1,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 3.0,
+    "skeptic_action": "keep",
+    "killed_by": "dossier_floor",
+    "reason": "The scout's bullish sweeps are NOT confirmed by dark-pool accumulation \u2014 the 20 most recent prints are retail-size extended-hours lots (~$100K-$261K), so no +2 confluence. The insider tool returned no net buy/sell figure",
+    "outcome": {
+      "spot_at_rejection": 811.3,
+      "spot_7_trading_days_later": 594.51,
+      "fwd_return_7d": -0.2672
+    }
+  },
+  {
+    "rejection_id": "2026-11-11_NVDA",
+    "date": "2026-11-11",
+    "ticker": "NVDA",
+    "rank": 2,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "Confirmed binary event (11/17 earnings, 13.7% implied move) falls within the 7-day window, triggering the mandatory NO-TRADE rule (-3) regardless of the bullish sweep flow that flagged NVDA. The dark-pool tape was two-wa",
+    "outcome": {
+      "spot_at_rejection": 173.73,
+      "spot_7_trading_days_later": 125.53,
+      "fwd_return_7d": -0.2774
+    }
+  },
+  {
+    "rejection_id": "2026-11-11_SPX",
+    "date": "2026-11-11",
+    "ticker": "SPX",
+    "rank": 3,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The market state tape confirms the regime's call-led risk-on tide (41.27M calls vs 30.27M puts, P/C 0.733, $24.24B vs $16.83B call-premium lead) and the chain's heavy 7620\u20137650 call sweep volume corroborates the scout's ",
+    "outcome": null
+  },
+  {
+    "rejection_id": "2026-11-11_TSM",
+    "date": "2026-11-11",
+    "ticker": "TSM",
+    "rank": 4,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 3.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The scout's bullish sweep flow fails conflation tests: dark-pool prints today are small (~$2-2.5M total) and directionally mixed, not accumulation. Insider activity is UNKNOWN from the tool payload (docked), and position",
+    "outcome": {
+      "spot_at_rejection": 413.35,
+      "spot_7_trading_days_later": 318.71,
+      "fwd_return_7d": -0.229
+    }
+  },
+  {
+    "rejection_id": "2026-11-25_CRDO",
+    "date": "2026-11-25",
+    "ticker": "CRDO",
+    "rank": 1,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 0.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "Dark-pool tape confirms the sweep flow (\u2248$23.9M, led by a $17.8M at-ask block, buy-side character), and both max pain ($122/$126) and the $109 gamma magnet sit above spot $106.795 \u2014 a constructive confluence worth +2/+1.",
+    "outcome": null
+  },
+  {
+    "rejection_id": "2026-11-25_SPY",
+    "date": "2026-11-25",
+    "ticker": "SPY",
+    "rank": 4,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 3.0,
+    "skeptic_action": "keep",
+    "killed_by": "dossier_floor",
+    "reason": "Dark-pool tape confirms mild buy-side accumulation accompanying the flagged sweeps (+2: repeated $0.1\u20130.9M blocks at/above ask), but insider signal is absent (ETF) and the options structure is at odds with an upside idea",
+    "outcome": null
+  },
+  {
+    "rejection_id": "2026-11-25_QQQ",
+    "date": "2026-11-25",
+    "ticker": "QQQ",
+    "rank": 5,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 3.0,
+    "skeptic_action": "keep",
+    "killed_by": "dossier_floor",
+    "reason": "The flow scout's green sweeps get only partial confirmation from dark pool \u2014 prints lean buy-side with a ~$1.13M largest print, but they cluster at 636-637 directly into the 636 dealer call wall, buying into a ceiling ra",
+    "outcome": null
+  },
+  {
+    "rejection_id": "2026-11-25_NVDA",
+    "date": "2026-11-25",
+    "ticker": "NVDA",
+    "rank": 7,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "keep",
+    "killed_by": "dossier_floor",
+    "reason": "The flagged green sweeps were NOT confirmed by dark-pool accumulation \u2014 prints were two-sided with the largest block ($757K) executed near the bid \u2014 so the +2 confluence credit is unavailable. Dealer structure sits at od",
+    "outcome": null
+  },
+  {
+    "rejection_id": "2026-11-25_CRDO",
+    "date": "2026-11-25",
+    "ticker": "CRDO",
+    "rank": 8,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "kill",
+    "killed_by": "dossier_floor",
+    "reason": "The flow scout's green sweeps were genuinely accompanied by dark-pool accumulation (~$23M+ visible, including a $17.8M block at $106.795), and the GEX/max-pain structure supports upside \u2014 gamma magnet $109 just above spo",
+    "outcome": null
+  },
+  {
+    "rejection_id": "2026-11-25_QQQ",
+    "date": "2026-11-25",
+    "ticker": "QQQ",
+    "rank": 9,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "keep",
+    "killed_by": "dossier_floor",
+    "reason": "The flagged green sweeps were NOT accompanied by confirmed dark-pool accumulation \u2014 today's QQQ prints are two-sided extended-hours blocks without side attribution, so the +2 confluence credit is withheld and insider is ",
+    "outcome": null
+  },
+  {
+    "rejection_id": "2026-11-25_SPY",
+    "date": "2026-11-25",
+    "ticker": "SPY",
+    "rank": 11,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 3.0,
+    "skeptic_action": "keep",
+    "killed_by": "dossier_floor",
+    "reason": "The flagged green sweeps are NOT accompanied by dark-pool accumulation \u2014 recent prints are only modest extended-hours blocks with no dominant large buy-side prints, denying the +2 confluence point. GEX structure is at od",
+    "outcome": null
+  },
+  {
+    "rejection_id": "2026-11-25_GPN",
+    "date": "2026-11-25",
+    "ticker": "GPN",
+    "rank": 12,
+    "dossier_verdict": null,
+    "dossier_score": null,
+    "skeptic_action": "downgrade",
+    "killed_by": "chair",
+    "reason": "The sweep is structurally genuine but it is a LEAP buyer who can wait through dealer walls, so it validates direction, not timing. GEX and max pain both put dealer hedging against any rally toward the $98.93 flip and $10",
+    "outcome": null
+  },
+  {
+    "rejection_id": "2026-11-25_SPX",
+    "date": "2026-11-25",
+    "ticker": "SPX",
+    "rank": 13,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 3.0,
+    "skeptic_action": "keep",
+    "killed_by": "dossier_floor",
+    "reason": "The two strongest confluence boosters are structurally unavailable for an index \u2014 dark-pool and insider tools both returned empty \u2014 so the rank-8 green sweeps stand alone with no confirming accumulation. GEX/max pain mil",
+    "outcome": null
+  }
+]

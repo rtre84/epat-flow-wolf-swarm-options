@@ -1,0 +1,54 @@
+{
+  "ticker": "MU",
+  "strategy": "bull_put_spread",
+  "profiles": {
+    "7d": {
+      "dte": 7,
+      "n": 243,
+      "win_rate": 0.774,
+      "mean_r": 0.133,
+      "median_r": 0.348,
+      "max_r": 0.951,
+      "min_r": -1.0
+    },
+    "30d": {
+      "dte": 30,
+      "n": 247,
+      "win_rate": 0.713,
+      "mean_r": 0.266,
+      "median_r": 0.64,
+      "max_r": 1.357,
+      "min_r": -1.0
+    },
+    "7d_recent": {
+      "dte": 7,
+      "n": 22,
+      "win_rate": 0.682,
+      "mean_r": 0.17,
+      "median_r": 0.538,
+      "max_r": 0.891,
+      "min_r": -1.0
+    },
+    "30d_recent": {
+      "dte": 30,
+      "n": 22,
+      "win_rate": 0.455,
+      "mean_r": 0.001,
+      "median_r": -0.416,
+      "max_r": 1.288,
+      "min_r": -1.0
+    }
+  },
+  "7d_pass": true,
+  "30d_pass": true,
+  "gate_pass": true,
+  "7d_recent_pass": true,
+  "30d_recent_pass": true,
+  "risk_budget": {
+    "cap_usd": 300,
+    "width_rule": "min(geometric, floor(cap*0.8/100)) pts, min 1 pt",
+    "legacy_geometry_width_risk_usd": 3450.0,
+    "legacy_note": "width-only upper bound at the latest close; the budget the old fixed-% geometry would have required"
+  },
+  "trade_id": "2026-11-25_MU"
+}

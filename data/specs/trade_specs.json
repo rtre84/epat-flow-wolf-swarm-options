@@ -15,7 +15,8 @@
       "congress_buy",
       "max_pain_above_spot"
     ],
-    "backtest_gate": "approved"
+    "backtest_gate": "approved",
+    "status": "executed"
   },
   {
     "trade_id": "2026-11-03_MU",
@@ -32,6 +33,43 @@
       "dark_pool_acc",
       "max_pain_pull_above_spot"
     ],
-    "backtest_gate": "approved"
+    "backtest_gate": "approved",
+    "status": "executed"
+  },
+  {
+    "trade_id": "2026-11-25_MU",
+    "scan_date": "2026-11-25",
+    "underlying": "MU",
+    "strategy": "bull_put_spread",
+    "expiry": "2026-12-11",
+    "max_risk_usd": 300,
+    "entry_trigger": "Enter only if MU pulls back to trade at or below $605.00 while holding above the $600.00 put wall (never initiate at spot ~$615); sell the 2026-12-11 $595 put and buy the 2026-12-11 $590 put.",
+    "invalidation": "Exit the spread if MU trades below $600.00 at any point intraday (loss of the put-wall shelf).",
+    "confidence": 4.0,
+    "signals": [
+      "congress_buys_30d",
+      "max_pain_above_spot",
+      "gex_put_wall_600"
+    ],
+    "backtest_gate": "approved",
+    "status": "executed"
+  },
+  {
+    "trade_id": "2026-11-25_SMTC",
+    "scan_date": "2026-11-25",
+    "underlying": "SMTC",
+    "strategy": "bull_put_spread",
+    "expiry": "2026-12-18",
+    "max_risk_usd": 300,
+    "entry_trigger": "Enter only if SMTC pulls back to trade between $90.00 and $92.00 while holding above the $90.00 put wall; sell the 2026-12-18 $90 put and buy the 2026-12-18 $85 put.",
+    "invalidation": "Exit the spread if SMTC trades below $90.00 at any point intraday (put-wall break).",
+    "confidence": 4.5,
+    "signals": [
+      "dark_pool_acc",
+      "gex_put_wall_90",
+      "max_pain_above_spot"
+    ],
+    "backtest_gate": "approved",
+    "status": "executed"
   }
 ]

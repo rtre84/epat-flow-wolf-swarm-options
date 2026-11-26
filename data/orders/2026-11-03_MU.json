@@ -1,0 +1,39 @@
+{
+  "trade_id": "2026-11-03_MU",
+  "underlying": "MU",
+  "strategy": "bull_put_spread",
+  "expiry": "monthly",
+  "direction": "put_credit",
+  "max_risk_usd": 250.0,
+  "entry_date": "2026-11-25",
+  "entry_spot": 601.25,
+  "entry_iv": 1.5388,
+  "dte": 7,
+  "net_usd": 96.99,
+  "risk_usd_one": 103.01,
+  "qty": 2,
+  "committed_risk_usd": 206.01,
+  "legs": [
+    {
+      "action": "sell",
+      "right": "P",
+      "strike": 577.1999999999999,
+      "qty": 2,
+      "fill_price": 4885.39
+    },
+    {
+      "action": "buy",
+      "right": "P",
+      "strike": 575.1999999999999,
+      "qty": 2,
+      "fill_price": 4788.39
+    }
+  ],
+  "status": "open",
+  "closed_date": null,
+  "exit_kind": null,
+  "exit_spot": null,
+  "unrealized_usd": null,
+  "pnl_usd": null,
+  "pnl_r": null
+}
