@@ -24,11 +24,13 @@ def bucket_stats(results: list[ReplayResult]) -> dict:
 
 def report(flow: list[ReplayResult], ordinary: list[ReplayResult],
            z_thresh: float, tickers: list[str],
-           day_from: date, day_to: date) -> dict:
+           day_from: date, day_to: date,
+           per_ticker: dict[str, list[str]] | None = None) -> dict:
     payload = {
         "z_thresh": z_thresh,
         "tickers": tickers,
         "range": [day_from.isoformat(), day_to.isoformat()],
+        "per_ticker_ranges": per_ticker,
         "flow": bucket_stats(flow),
         "ordinary": bucket_stats(ordinary),
         "edge": None,
@@ -56,6 +58,13 @@ def markdown(payload: dict) -> str:
         f"(trailing 20 days) = flow day.",
         f"Universe: {', '.join(payload['tickers'])}; "
         f"{payload['range'][0]} → {payload['range'][1]}.",
+    ]
+    per_ticker = payload.get("per_ticker_ranges")
+    if per_ticker:
+        out.append("Per-ticker ranges: " + "; ".join(
+            f"{t} {r[0]}→{r[1]}" for t, r in sorted(per_ticker.items())) +
+            ".")
+    out += [
         "Entry: bull put spread, short 0.96×spot (grid), width capped to "
         "the $300 budget, 7+ day expiry, real EOD closes; expiry settle.",
         "",

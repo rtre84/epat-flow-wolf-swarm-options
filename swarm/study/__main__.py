@@ -78,10 +78,12 @@ def _atm_activity(day_bars: dict[str, dict[str, dict]], day: date) -> float:
 
 def run(tickers: list[str], day_from: date, day_to: date,
         z_thresh: float = DEFAULT_Z, stride: int = 1,
-        client: PolygonClient | None = None) -> dict:
+        client: PolygonClient | None = None,
+        raw_out: str | None = None) -> dict:
     cli = client or PolygonClient()
     all_flow: list[ReplayResult] = []
     all_ordinary: list[ReplayResult] = []
+    tagged: list[dict] = []  # bucket-tagged raw entries for merging
     for ticker in tickers:
         stock = cli.stock_aggs(ticker, day_from.isoformat(),
                                (day_to + timedelta(days=45)).isoformat())
@@ -124,10 +126,16 @@ def run(tickers: list[str], day_from: date, day_to: date,
         for day, res in replayed.items():
             if res is None:
                 continue
-            (all_flow if day in set(buckets["flow"]) else all_ordinary).append(res)
+            in_flow = day in set(buckets["flow"])
+            (all_flow if in_flow else all_ordinary).append(res)
+            tagged.append({**res.to_dict(),
+                          "bucket": "flow" if in_flow else "ordinary"})
         print(f"[done] {ticker}: flow={len(buckets['flow'])} "
               f"ordinary={len(buckets['ordinary'])}", file=sys.stderr)
 
+    if raw_out:
+        Path(raw_out).write_text(json.dumps(tagged, indent=2))
+        print(f"[raw] {len(tagged)} entries -> {raw_out}", file=sys.stderr)
     payload = report(all_flow, all_ordinary, z_thresh, tickers,
                      day_from, day_to)
     (OUT_DIR / "baseline.json").write_text(json.dumps(payload, indent=2))
@@ -136,19 +144,64 @@ def run(tickers: list[str], day_from: date, day_to: date,
     return payload
 
 
+def merge(paths: list[str], z_thresh: float = DEFAULT_Z,
+          out_prefix: str = "data/study/baseline_4y") -> dict:
+    """Combine raw entry dumps from several runs into one report. Buckets
+    were assigned per-run, so entries merge directly; per-ticker ranges
+    come from the entries themselves (split-affected names may start
+    later than the global range)."""
+    from types import SimpleNamespace
+
+    entries = []
+    for p in paths:
+        entries.extend(json.loads(Path(p).read_text()))
+    if not entries:
+        raise RuntimeError("no entries found in raw files")
+
+    flow = [SimpleNamespace(**e) for e in entries if e["bucket"] == "flow"]
+    ordinary = [SimpleNamespace(**e) for e in entries
+                if e["bucket"] == "ordinary"]
+    tickers = sorted({e["ticker"] for e in entries})
+    per_ticker = {}
+    for t in tickers:
+        days = sorted(e["day"] for e in entries if e["ticker"] == t)
+        per_ticker[t] = [days[0], days[-1]]
+    lo = min(e["day"] for e in entries)
+    hi = max(e["day"] for e in entries)
+
+    payload = report(flow, ordinary, z_thresh, tickers,
+                     date.fromisoformat(lo), date.fromisoformat(hi),
+                     per_ticker=per_ticker)
+    out_json = Path(f"{out_prefix}.json")
+    out_md = Path(f"{out_prefix}.md")
+    out_json.write_text(json.dumps(payload, indent=2))
+    out_md.write_text(markdown(payload))
+    print(markdown(payload))
+    return payload
+
+
 def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(prog="swarm.study")
-    p.add_argument("command", choices=["run"])
+    p.add_argument("command", choices=["run", "merge"])
+    if "--merge" in argv or (argv and argv[0] == "merge"):
+        p.add_argument("paths", nargs="+", help="raw entry dumps to merge")
+        p.add_argument("--z", type=float, default=DEFAULT_Z)
+        p.add_argument("--out", default="data/study/baseline_4y")
+        args = p.parse_args(argv)
+        merge(args.paths, z_thresh=args.z, out_prefix=args.out)
+        return 0
     p.add_argument("--tickers", default="SPY,QQQ,TSLA,NVDA,MU")
     p.add_argument("--start", default="2025-11-01")
     p.add_argument("--end", default=date.today().isoformat())
     p.add_argument("--z", type=float, default=DEFAULT_Z)
     p.add_argument("--stride", type=int, default=1,
                    help="subsample ordinary days (2 = every other day)")
+    p.add_argument("--raw-out", default=None,
+                   help="dump all entries (bucket-tagged) for later merging")
     args = p.parse_args(argv)
     run([t.strip().upper() for t in args.tickers.split(",")],
         date.fromisoformat(args.start), date.fromisoformat(args.end),
-        z_thresh=args.z, stride=args.stride)
+        z_thresh=args.z, stride=args.stride, raw_out=args.raw_out)
     return 0
 
 

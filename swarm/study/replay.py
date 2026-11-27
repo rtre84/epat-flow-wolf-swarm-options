@@ -43,6 +43,14 @@ class ReplayResult:
     r: float
     notes: list[str] = field(default_factory=list)
 
+    def to_dict(self) -> dict:
+        return {
+            "ticker": self.ticker, "day": self.day, "expiry": self.expiry,
+            "short_k": self.short_k, "long_k": self.long_k,
+            "credit": self.credit, "risk": self.risk,
+            "exit_spot": self.exit_spot, "pnl": self.pnl, "r": self.r,
+        }
+
 
 def settle_put_spread(credit: float, short_k: float, long_k: float,
                       spot_at_expiry: float) -> tuple[float, float]:

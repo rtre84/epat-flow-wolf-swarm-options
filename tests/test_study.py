@@ -1,5 +1,6 @@
 """Tests for the baseline study modules (swarm.study). All pure — no
 network, no API key."""
+import json
 import unittest
 from datetime import date
 
@@ -162,6 +163,28 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(payload["edge"], 1.0)
         self.assertIn("flow days", markdown(payload))
         self.assertIn("ordinary days", markdown(payload))
+
+    def test_merge_combines_raw_dumps(self) -> None:
+        from swarm.study.__main__ import merge
+        a = {**self._res(0.5).to_dict(), "bucket": "flow", "ticker": "SPY",
+             "day": "2026-01-02"}
+        b = {**self._res(-0.5).to_dict(), "bucket": "ordinary",
+             "ticker": "NVDA", "day": "2026-02-02"}
+        import tempfile
+        from pathlib import Path as P
+        with tempfile.TemporaryDirectory() as tmp:
+            pa, pb = P(tmp) / "a.json", P(tmp) / "b.json"
+            pa.write_text(json.dumps([a]))
+            pb.write_text(json.dumps([b]))
+            out = P(tmp) / "merged"
+            payload = merge([str(pa), str(pb)], out_prefix=str(out))
+            self.assertEqual(payload["flow"]["n"], 1)
+            self.assertEqual(payload["ordinary"]["n"], 1)
+            self.assertEqual(payload["tickers"], ["NVDA", "SPY"])
+            self.assertEqual(payload["per_ticker_ranges"]["SPY"][0],
+                             "2026-01-02")
+            self.assertTrue(out.with_suffix(".json").exists())
+            self.assertTrue(P(str(out) + ".json").exists())
 
 
 if __name__ == "__main__":
