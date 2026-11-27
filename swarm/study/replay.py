@@ -61,6 +61,8 @@ def replay_entry(ticker: str, day: date, spot: float,
     short_k, long_k = spread_strikes(spot, ticker=ticker, cap_usd=cap_usd)
     if short_close is None or long_close is None:
         return None
+    if exit_spot is None:
+        return None  # expiry not yet in underlying history (entry too recent)
     credit = short_close - long_close
     risk = (short_k - long_k) - credit
     if risk * 100 > cap_usd:

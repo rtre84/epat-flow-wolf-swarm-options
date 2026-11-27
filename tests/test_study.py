@@ -108,6 +108,12 @@ class ReplayTests(unittest.TestCase):
         self.assertAlmostEqual(res.credit, 0.7)
         self.assertGreater(res.r, 0.0)  # expired worthless above the strikes
 
+    def test_missing_exit_spot_skips(self) -> None:
+        # entries whose expiry hasn't printed yet cannot be judged — skip
+        res = replay_entry("SPY", date(2026, 11, 25), 624.0,
+                           short_close=1.05, long_close=0.35, exit_spot=None)
+        self.assertIsNone(res)
+
     def test_high_priced_stock_grid_cannot_fund_cap(self) -> None:
         # MU at 738: $5 grid -> min spread risks (5 - credit)*100 > $300
         res = replay_entry("MU", date(2026, 11, 25), 738.0,
