@@ -1,0 +1,31 @@
+{
+  "tracked": 4,
+  "open": 4,
+  "closed": 0,
+  "realized_pnl_usd": 0,
+  "open_committed_risk_usd": 819.18,
+  "win_rate": null,
+  "mean_r": null,
+  "records": [
+    {
+      "trade_id": "2026-11-03_MU",
+      "status": "open",
+      "changed": true
+    },
+    {
+      "trade_id": "2026-11-06_MU",
+      "status": "open",
+      "changed": true
+    },
+    {
+      "trade_id": "2026-11-25_MU",
+      "status": "open",
+      "changed": true
+    },
+    {
+      "trade_id": "2026-11-25_SMTC",
+      "status": "open",
+      "changed": true
+    }
+  ]
+}
