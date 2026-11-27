@@ -1,0 +1,29 @@
+{
+  "z_thresh": 2.0,
+  "tickers": [
+    "SPY",
+    "QQQ",
+    "NVDA",
+    "TSLA",
+    "MU"
+  ],
+  "range": [
+    "2025-11-01",
+    "2026-11-25"
+  ],
+  "flow": {
+    "n": 36,
+    "win_rate": 0.806,
+    "mean_r": 0.188,
+    "median_r": 0.302,
+    "mean_credit": 0.79
+  },
+  "ordinary": {
+    "n": 548,
+    "win_rate": 0.737,
+    "mean_r": 0.284,
+    "median_r": 0.25,
+    "mean_credit": 0.76
+  },
+  "edge": -0.096
+}
