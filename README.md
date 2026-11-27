@@ -27,6 +27,7 @@ UW MCP data
 - [`docs/STATE.md`](docs/STATE.md) — current state: phase commits, module behavior, data artifacts, open items
 - [`docs/decisions.md`](docs/decisions.md) — locked design decisions, thresholds, and testing gotchas
 - [`docs/pit_audit.md`](docs/pit_audit.md) — point-in-time audit: which UW endpoints return as-of data, and the live-scan policy
+- [`docs/report_skeleton.md`](docs/report_skeleton.md) — EPAT final report working skeleton: evidence inventory + fill-in slots for the Dec 4 book close
 
 ## Strategies
 
