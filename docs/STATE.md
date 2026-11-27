@@ -19,11 +19,11 @@ how it behaves. Any refactor must update it in the same change._
 | 7 | Risk-budget strikes (mentor feedback): width capped to `max_risk_usd`, width-scaled net floor, budget sensitivity in gate reports | `44a4765` | done |
 | 8 | Rejection log (mentor: track the skips) + close-cache refresh fix (stale-cache fill bug) | `711f5dd` | done |
 | 9 | Point-in-time fixes (mentor: no look-ahead bias): date params exposed on all dated UW wrappers, scan-date discipline in every task, `docs/pit_audit.md` + locked policy | `980b143` | done |
+| 10 | Baseline study (mentor: external backtester): Polygon real historical option quotes, mechanical flow rule, flow days vs ordinary days | (this change) | code + tests green; pilot run complete |
 
-Test suite: `./.venv/bin/python -m unittest discover -s tests` — **73 tests, all green**
-(21 pre-existing + 20 in `tests/test_specstore.py` + 15 in
-`tests/test_gate.py` Phase 7/8 tests + 11 in `tests/test_rejections.py` +
-10 in `tests/test_uw_tools.py`, with `test_paper.py` updated to the
+Test suite: `./.venv/bin/python -m unittest discover -s tests` — **93 tests, all green**
+(21 pre-existing + 20 specstore + 15 gate Phase 7/8 + 11 rejections +
+10 uw_tools + 16 study tests, with `test_paper.py` updated to the
 Phase 7 fill semantics).
 
 ## Module map (as of Phase 6)
@@ -121,6 +121,32 @@ Phase 7 fill semantics).
 - `swarm/prompts/` — `chair.md`, `regime_analyst.md`, `flow_scout.md`,
   `dossier_analyst.md`, `skeptic.md` loaded via `prompts.load(name)`
   (`resources.files("swarm.prompts")`).
+- `swarm/study/` — **new (Phase 10).** The baseline study (mentor
+  requirement: an external backtester using real historical option quotes
+  that accepts our own signal dates, comparing flow days against ordinary
+  days over years of history):
+  - `client.py` — Polygon/Massive REST client, key via `.env`
+    (`POLYGON_API_KEY`), every response cached under
+    `data/study/cache/` (resumable pulls), retries on 429/5xx and
+    transport drops. Historical aggregates only — point-in-time by
+    construction.
+  - `contracts.py` — pure strike-grid helpers ($1 grid on index ETFs and
+    sub-$200 names, $2.5/$5 above), Friday expiry selection, Polygon
+    `O:SYMYYMMDD[C/P]NNNNNNNN` tickers.
+  - `flow_rule.py` — mechanical flow signal: ATM call+put volume z-score
+    vs the trailing 20 days (window excludes the scored day); volume only,
+    no OI (historical OI needs a higher tier).
+  - `replay.py` — the live pipeline's entry rule on real EOD closes
+    (short 0.96×spot put spread on the real grid, width capped to the
+    $300 budget, 7+ day expiry, expiry settle). Skips quotes-missing,
+    degenerate, and unfundable structures — the gate's filters plus the
+    executor's cap. Honest finding: high-priced names on $5 grids cannot
+    fund a $300 spread at all (real chains list no narrower strikes);
+    entries concentrate on $1/$2.5-grid names.
+  - `report.py` — flow vs ordinary buckets (n, win rate, mean R, median R)
+    → `data/study/baseline.{json,md}`.
+  - CLI: `python -m swarm.study run --tickers SPY,QQQ,NVDA,TSLA,MU
+    --start 2025-11-01 [--z 2.0] [--stride 1]`.
 - `swarm/tools/uw.py` — minimal streamable-HTTP MCP client (no SDK).
 - `swarm/tools/uw_tools.py` — typed CrewAI tools over UW endpoints
   (rate-disciplined, one lazily-initialized shared client — import spawns
@@ -141,6 +167,8 @@ Phase 7 fill semantics).
 | `data/specs/trade_specs.json` | accumulated gated ideas, upserted by `trade_id` (`backtest_gate`: `approved` / `pending_backtest` / reject, plus `status`); scans never overwrite history |
 | `data/orders/*.json` | paper fill records |
 | `data/rejections/rejections.json` | every killed candidate: stage, score, reason, forward 7d outcome |
+| `data/study/baseline.{json,md}` | flow-days vs ordinary-days baseline (Polygon real quotes) |
+| `data/study/cache/` | cached Polygon responses (resumable pulls) |
 | `data/pnl/summary.json` | tracker summary (learning-loop input) |
 | `data/backtests/cache/` | 5y close series per ticker |
 | `reports/raw/` | per-stage agent transcripts |

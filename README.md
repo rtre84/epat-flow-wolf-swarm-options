@@ -53,6 +53,7 @@ swarm/
   crew.py            # run_scan(): 3-stage CrewAI orchestration + scan CLI
   daily.py           # one-command day: run_scan → fill approved → mark book
   learn.py           # chair_calibration(): P&L facts → chair prompt directive
+  study/             # baseline study: Polygon real quotes, flow vs ordinary days
   prompts/             # all agent prompts as .md files (config, not code)
   tools/
     uw.py              # UW MCP client (rate-disciplined)
@@ -110,6 +111,10 @@ cp .env.example .env              # then fill in:
 ./.venv/bin/python -m swarm.rejections mark      # fill pending outcomes (UW closes)
 ./.venv/bin/python -m swarm.rejections backfill  # rebuild from scan transcripts
 
+# Baseline study: mechanical flow rule vs ordinary days, real Polygon quotes
+./.venv/bin/python -m swarm.study run --tickers SPY,QQQ,NVDA,TSLA,MU \
+    --start 2025-11-01 --end 2026-11-25          # → data/study/baseline.{json,md}
+
 # Run tests
 ./.venv/bin/python -m unittest discover -s tests -v
 ```
@@ -152,6 +157,7 @@ cp .env.example .env              # then fill in:
 |---|---|
 | `data/specs/trade_specs.json` | accumulated ideas + gate verdicts (upserted by trade_id; approved records are never replaced) |
 | `data/rejections/rejections.json` | killed candidates: stage, score, reason, forward 7d outcome |
+| `data/study/baseline.{json,md}` | flow-days vs ordinary-days baseline (Polygon real quotes) |
 | `data/orders/` | paper fill records |
 | `data/pnl/summary.json` | realized P&L, win rate, mean R |
 | `data/backtests/cache/` | 5y close series per ticker |

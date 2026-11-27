@@ -57,6 +57,19 @@ re-derive behavior.
    `docs/pit_audit.md`. Locked policy there: performance claims come only
    from live-date scans; the 2026-11-02→07 backfill runs are marked
    look-ahead-biased and excluded from claims.
+9. **The baseline study is the swarm's yardstick (mentor: an external
+   backtester with real historical option quotes).** `swarm/study/` replays
+   the live pipeline's entry rule (budget-capped bull put spread,
+   0.96×spot short on the real strike grid, 7+ day expiry, expiry settle)
+   on real Polygon EOD closes, bucketed by a mechanical flow signal
+   (ATM call+put volume z-score ≥ 2 vs trailing 20 days; volume only —
+   historical OI is not on our tier). Flow days are compared against
+   ordinary days over the same range, so the swarm's live results are
+   judged against a mechanical baseline. Fidelity notes, both documented:
+   the study settles at expiry only (the live book also stops at 2×
+   premium), and the real chain grid means high-priced names cannot fund
+   $300 spreads (narrower strikes are not listed) — a real-world
+   constraint the live book's synthetic raw-float strikes mask.
    Scout candidate volume is prompt-native (AT MOST 8 in `flow_scout.md`,
    mirrored by `MAX_CANDIDATES=8`); the funnel is deliberately wide —
    `min_premium=100000`, a non-sweep ask-side block pass, and up to 8
