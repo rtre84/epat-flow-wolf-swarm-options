@@ -562,5 +562,41 @@
     "killed_by": "dossier_floor",
     "reason": "The two strongest confluence boosters are structurally unavailable for an index \u2014 dark-pool and insider tools both returned empty \u2014 so the rank-8 green sweeps stand alone with no confirming accumulation. GEX/max pain mil",
     "outcome": null
+  },
+  {
+    "rejection_id": "2026-11-27_ANT",
+    "date": "2026-11-27",
+    "ticker": "ANT",
+    "rank": 1,
+    "dossier_verdict": "BULLISH",
+    "dossier_score": 6.0,
+    "skeptic_action": "kill",
+    "killed_by": "skeptic_kill",
+    "reason": "Every pillar of the bullish case fails verification: the cited call sweeps and dark-pool prints reference strikes ($18\u2013$25) and spot ($18.42) that no longer exist on the tape, with current underlying at ~$80\u2013$92. Current",
+    "outcome": null
+  },
+  {
+    "rejection_id": "2026-11-27_SPCX",
+    "date": "2026-11-27",
+    "ticker": "SPCX",
+    "rank": 2,
+    "dossier_verdict": "BULLISH",
+    "dossier_score": 4.0,
+    "skeptic_action": "downgrade",
+    "killed_by": "dossier_floor",
+    "reason": "The flagged call sweeps show partial confluence \u2014 dark-pool prints on the scan date were predominantly buy-side (several at/above ask incl. a $520K block, ~$2M notional), worth ~+1 on the rubric since size was modest and",
+    "outcome": null
+  },
+  {
+    "rejection_id": "2026-11-27_AMD",
+    "date": "2026-11-27",
+    "ticker": "AMD",
+    "rank": 3,
+    "dossier_verdict": "NO-TRADE",
+    "dossier_score": 2.0,
+    "skeptic_action": "keep",
+    "killed_by": "dossier_floor",
+    "reason": "The scout's bullish flag is contradicted by the tape: today's largest AMD sweeps were PUT-side ($1.22M Jan-27 390P, $1.16M Jan-28 300P repeated hits, $770K Dec-18 400P) vs smaller call sweeps ($983K Dec-18 375C, $692K Ja",
+    "outcome": null
   }
 ]
